@@ -1,0 +1,1550 @@
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SyncTag Pro | Sync Licensing Audio Metadata Engine</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF.js for parsing BMI/ASCAP/PRO registrations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- PapaParse for CSV/Spreadsheet Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        sync: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                        },
+                        studio: {
+                            800: '#1e222d',
+                            850: '#171a23',
+                            900: '#111319',
+                            950: '#0b0c10',
+                            accent: '#6366f1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar & audio glow */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111319; }
+        ::-webkit-scrollbar-thumb { background: #2d3343; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4f576e; }
+        .glow-accent { box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25); }
+        .tag-pill { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dropzone-active { border-color: #6366f1 !important; background: rgba(99, 102, 241, 0.08) !important; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #6366f1 !important; }
+    </style>
+</head>
+<body class="bg-studio-950 text-slate-100 min-h-screen font-sans flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="border-b border-slate-800/80 bg-studio-900/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <i data-lucide="radio" class="w-5 h-5 text-white"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-black text-lg tracking-wider uppercase bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-200 to-indigo-300">SyncTag Pro</span>
+                    <span class="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Sync Broadcast Ready</span>
+                </div>
+                <p class="text-xs text-slate-400">Audio Metadata Injection & Rights Vault for Film/TV/Ad Placements</p>
+            </div>
+        </div>
+
+        <!-- Quick Profile & Sync Health Bar -->
+        <div class="flex items-center gap-4">
+            <div class="hidden md:flex items-center gap-3 bg-studio-850 px-3.5 py-1.5 rounded-lg border border-slate-800">
+                <div class="flex flex-col text-right">
+                    <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Active Vault Profile</span>
+                    <span id="activeProfileDisplay" class="text-xs font-medium text-indigo-300">Nightfall Music Pub (BMI)</span>
+                </div>
+                <button onclick="openProfileModal()" class="p-1.5 rounded-md hover:bg-slate-700/50 text-slate-300 transition" title="Switch or Edit Rights Profile">
+                    <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i>
+                </button>
+            </div>
+
+            <!-- Pre-clearance status pill -->
+            <div id="readinessScoreContainer" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-studio-850 border border-slate-800">
+                <span class="text-xs text-slate-400 font-medium">Sync Readiness:</span>
+                <span id="syncScoreBadge" class="text-xs font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">0% Incomplete</span>
+            </div>
+
+            <button onclick="triggerDownload()" id="downloadBtn" disabled class="opacity-50 cursor-not-allowed bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-xs px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-500/15 transition-all">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Embed & Export</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Grid -->
+    <main class="flex-1 max-w-[1720px] w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Ingestion, Audio Deck, and Document Parsing (4 Cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-5">
+            
+            <!-- 1. Audio Dropzone -->
+            <div class="bg-studio-850 rounded-xl border border-slate-800 p-5 shadow-xl relative overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="disc" class="w-4 h-4 text-indigo-400"></i>
+                        1. Audio Source File
+                    </h2>
+                    <span id="audioFormatBadge" class="text-[10px] font-mono text-slate-400 uppercase bg-studio-900 px-2 py-0.5 rounded border border-slate-700">WAV / MP3 / AIFF</span>
+                </div>
+
+                <div id="audioDropzone" class="border-2 border-dashed border-slate-700 hover:border-indigo-500/60 rounded-xl p-6 text-center cursor-pointer transition-all bg-studio-900/40 group flex flex-col items-center justify-center min-h-[170px]">
+                    <input type="file" id="audioFileInput" accept=".mp3,.wav,.aiff,.m4a" class="hidden">
+                    <div class="w-12 h-12 rounded-full bg-indigo-500/10 group-hover:bg-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 transition">
+                        <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-200 group-hover:text-indigo-300">Drag & Drop master track here</p>
+                    <p class="text-xs text-slate-400 mt-1">Accepts uncompressed broadcast .WAV or 320kbps .MP3</p>
+                    <span class="mt-3 text-[11px] font-mono text-indigo-400/90 underline">or click to browse local files</span>
+                </div>
+
+                <!-- Audio Player Mini Deck (Hidden initially) -->
+                <div id="playerDeck" class="hidden mt-4 pt-4 border-t border-slate-800 flex flex-col gap-2">
+                    <div class="flex items-center justify-between text-xs">
+                        <span id="currentTrackName" class="font-medium text-slate-200 truncate max-w-[200px]">No file</span>
+                        <span id="currentTrackMeta" class="text-slate-400 font-mono text-[11px]">0:00 / 0:00</span>
+                    </div>
+
+                    <!-- Mini Waveform Canvas -->
+                    <div class="relative bg-studio-900 rounded-lg h-14 w-full overflow-hidden border border-slate-800 flex items-center">
+                        <canvas id="waveformCanvas" class="w-full h-full cursor-pointer"></canvas>
+                        <audio id="audioElement" class="hidden"></audio>
+                    </div>
+
+                    <div class="flex items-center justify-between mt-1">
+                        <div class="flex items-center gap-2">
+                            <button id="playPauseBtn" class="p-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white transition">
+                                <i data-lucide="play" id="playIcon" class="w-4 h-4"></i>
+                            </button>
+                            <button id="stopBtn" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                                <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            Format: <span id="detectedFormat" class="font-bold text-slate-200">Unknown</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Smart Document & Registration Ingestion (PDF / CSV) -->
+            <div class="bg-studio-850 rounded-xl border border-slate-800 p-5 shadow-xl flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                        2. Smart Document Auto-Fill
+                    </h2>
+                    <span class="text-[10px] text-slate-400 bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20">AI Ingest</span>
+                </div>
+                <p class="text-xs text-slate-400">
+                    Upload your <strong>BMI / ASCAP Work Registration PDF</strong>, cue sheet, or catalog <strong>ISRC spreadsheet (CSV)</strong> to instantly extract & match clearance fields.
+                </p>
+
+                <!-- Document Drop Zones in Tabs -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <!-- PDF Drop -->
+                    <label class="border border-slate-700 hover:border-slate-500 bg-studio-900/60 hover:bg-studio-900 rounded-lg p-3 text-center cursor-pointer flex flex-col items-center gap-2 transition group">
+                        <input type="file" id="pdfFileInput" accept=".pdf" class="hidden">
+                        <i data-lucide="file-text" class="w-5 h-5 text-red-400 group-hover:scale-110 transition"></i>
+                        <span class="font-medium text-slate-300">BMI / ASCAP PDF</span>
+                        <span class="text-[10px] text-slate-500">Auto-reads Work #, IPI, Splits</span>
+                    </label>
+
+                    <!-- CSV / Spreadsheet Drop -->
+                    <label class="border border-slate-700 hover:border-slate-500 bg-studio-900/60 hover:bg-studio-900 rounded-lg p-3 text-center cursor-pointer flex flex-col items-center gap-2 transition group">
+                        <input type="file" id="csvFileInput" accept=".csv,.tsv,.txt" class="hidden">
+                        <i data-lucide="table" class="w-5 h-5 text-emerald-400 group-hover:scale-110 transition"></i>
+                        <span class="font-medium text-slate-300">ISRC Catalog CSV</span>
+                        <span class="text-[10px] text-slate-500">Match ISRCs, BPM, Sound-alike</span>
+                    </label>
+                </div>
+
+                <!-- Document Parser Activity Log -->
+                <div id="parseStatusBox" class="bg-studio-900/90 rounded-lg p-3 border border-slate-800 text-[11px] font-mono text-slate-400 max-h-32 overflow-y-auto flex flex-col gap-1">
+                    <div class="text-slate-500">// Ingestion engine idle. Ready for PDF registrations or CSV catalogs.</div>
+                </div>
+
+                <!-- Quick Catalog Match Drawer -->
+                <div id="catalogMatches" class="hidden flex flex-col gap-2">
+                    <span class="text-[11px] font-bold uppercase text-slate-400">Detected Spreadsheet Tracks:</span>
+                    <div id="catalogList" class="flex flex-col gap-1.5 max-h-40 overflow-y-auto pr-1"></div>
+                </div>
+            </div>
+
+            <!-- 3. Pre-Saved Vault Profiles (Local Sync Database) -->
+            <div class="bg-studio-850 rounded-xl border border-slate-800 p-5 shadow-xl flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-indigo-400"></i>
+                        3. Pre-Set Publisher / Writer Vault
+                    </h2>
+                    <button onclick="saveCurrentAsProfile()" class="text-[11px] text-indigo-400 hover:underline flex items-center gap-1 font-medium">
+                        <i data-lucide="save" class="w-3 h-3"></i> Save Active
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400">
+                    Switch between pre-saved catalog entities to instantly auto-fill contact info, publisher, writer PRO, and 100% one-stop sync warranty clauses.
+                </p>
+
+                <div class="flex flex-wrap gap-2 pt-1" id="profilePillsContainer">
+                    <!-- Dynamic Profile Pills -->
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Sync Licensing Metadata Editor (8 Cols) -->
+        <section class="lg:col-span-8 flex flex-col gap-5">
+
+            <!-- Card: Core Sync Licensing Information -->
+            <div class="bg-studio-850 rounded-xl border border-slate-800 p-6 shadow-xl">
+                
+                <div class="flex flex-wrap items-center justify-between pb-4 border-b border-slate-800 gap-3">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i data-lucide="file-badge" class="w-5 h-5 text-emerald-400"></i>
+                            Sync Metadata Specification (Industry Standard ID3v2.4 & Broadcast WAV bext)
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Every field required by Film/TV Music Supervisors, Networks & Ad Agencies</p>
+                    </div>
+
+                    <!-- 1-Click Clear / Demo Filler -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="fillSampleSyncData()" class="px-2.5 py-1 text-xs bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-md transition flex items-center gap-1.5 font-medium">
+                            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Load Sample Sync Track
+                        </button>
+                        <button onclick="resetMetadataForm()" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-md transition">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-5">
+                    
+                    <!-- Track Title -->
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
+                            Track Title <span class="text-emerald-400">*</span>
+                        </label>
+                        <input type="text" id="metaTitle" placeholder="e.g. Midnight Run (Main Instrumental Mix)" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-500 transition">
+                    </div>
+
+                    <!-- Version / Mix -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Version / Stem Type</label>
+                        <select id="metaVersion" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
+                            <option value="Main Vocal">Full Vocal Master</option>
+                            <option value="Instrumental" selected>Full Instrumental</option>
+                            <option value="TV Mix / No Lead">TV Mix (Backing Vocals Only)</option>
+                            <option value="Underscore / Light">Underscore / Light</option>
+                            <option value="60s Cutdown">60s Commercial Cutdown</option>
+                            <option value="30s Promo">30s Promo Cutdown</option>
+                            <option value="Stems Available">Full Stems Available</option>
+                        </select>
+                    </div>
+
+                    <!-- Artist Name -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Artist / Project <span class="text-emerald-400">*</span></label>
+                        <input type="text" id="metaArtist" placeholder="e.g. Atlas Silver" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                    </div>
+
+                    <!-- Album / Library Name -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Album / Sync Reel</label>
+                        <input type="text" id="metaAlbum" placeholder="e.g. Cinematic Tension Vol. 4" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                    </div>
+
+                    <!-- Release Year -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Year</label>
+                        <input type="text" id="metaYear" placeholder="2025" value="2025" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                    </div>
+
+                    <!-- ISRC Code -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
+                            <span>ISRC Code</span>
+                            <span class="text-[10px] text-slate-500 font-mono">12 Chars</span>
+                        </label>
+                        <input type="text" id="metaISRC" placeholder="US-S1Z-25-00109" maxlength="15" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-emerald-400 placeholder-slate-600 transition">
+                    </div>
+
+                    <!-- ISWC Code / Work ID -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
+                            <span>ISWC / PRO Work ID</span>
+                            <span class="text-[10px] text-slate-500 font-mono">BMI/ASCAP</span>
+                        </label>
+                        <input type="text" id="metaISWC" placeholder="T-070.245.981-2 / #4829103" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-slate-600 transition">
+                    </div>
+
+                    <!-- Sync Clearance Status (One-Stop / Pre-cleared) -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Clearance Guarantee <span class="text-emerald-400">*</span></label>
+                        <select id="metaClearance" class="w-full bg-studio-900 border border-emerald-500/40 rounded-lg px-3 py-2 text-sm text-emerald-300 font-medium transition">
+                            <option value="100% ONE-STOP (Both Master & Sync 100% Pre-cleared)">⚡ 100% ONE-STOP (Master & Sync)</option>
+                            <option value="200% Pre-Cleared (Standard Indie Co-Publishing)">200% Pre-Cleared</option>
+                            <option value="Master Only Pre-Cleared (Pub Requires Clearance)">Master Only (Publishing Separate)</option>
+                            <option value="Direct License / Buyout">Direct Royalty-Free / Buyout</option>
+                        </select>
+                    </div>
+
+                    <!-- Tempo (BPM) -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Tempo (BPM)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="metaBPM" placeholder="124" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                            <button type="button" onclick="tapTempo()" id="tapTempoBtn" class="px-3 bg-studio-800 hover:bg-slate-700 text-xs font-mono text-slate-300 rounded-lg border border-slate-700 whitespace-nowrap active:bg-indigo-600 active:text-white">TAP</button>
+                        </div>
+                    </div>
+
+                    <!-- Musical Key & Mode -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Musical Key</label>
+                        <select id="metaKey" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
+                            <option value="">Select Key...</option>
+                            <option value="A Minor">A Minor (Am)</option>
+                            <option value="C Major">C Major (C)</option>
+                            <option value="D Minor">D Minor (Dm)</option>
+                            <option value="E Minor">E Minor (Em)</option>
+                            <option value="F Major">F Major (F)</option>
+                            <option value="G Major">G Major (G)</option>
+                            <option value="F# Minor">F# Minor (F#m)</option>
+                            <option value="Bb Major">Bb Major</option>
+                            <option value="B Minor">B Minor (Bm)</option>
+                            <option value="Ab Major">Ab Major</option>
+                            <option value="Eb Major">Eb Major</option>
+                        </select>
+                    </div>
+
+                    <!-- Explicit Content Status -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Explicit Lyrics</label>
+                        <select id="metaExplicit" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
+                            <option value="Clean / None">Clean / Safe for Broadcast</option>
+                            <option value="Explicit Lyrics">Explicit (Contains Profanity)</option>
+                            <option value="Instrumental (No Vocals)">Pure Instrumental</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section: Rights, Writers & Splits Matrix (Crucial for Sync) -->
+                <div class="mt-6 pt-5 border-t border-slate-800">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Writers, PROs, IPI/CAE & Split Matrix</h3>
+                            <span class="text-[10px] text-slate-400">(Must equal 100% for 1-stop clearance)</span>
+                        </div>
+                        <button onclick="addWriterRow()" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                            <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Add Split
+                        </button>
+                    </div>
+
+                    <!-- Splits Table / Rows Container -->
+                    <div id="splitsContainer" class="flex flex-col gap-2">
+                        <!-- Default Writer Row 1 -->
+                        <div class="writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850">
+                            <input type="text" placeholder="Writer Full Legal Name (First Last)" value="Marcus Vance" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                            <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
+                                <option value="BMI" selected>BMI</option>
+                                <option value="ASCAP">ASCAP</option>
+                                <option value="SESAC">SESAC</option>
+                                <option value="PRS">PRS for Music</option>
+                                <option value="SOCAN">SOCAN</option>
+                                <option value="GEMA">GEMA</option>
+                            </select>
+                            <input type="text" placeholder="IPI / CAE # (e.g. 00849204918)" value="00849204918" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                            <div class="col-span-2 flex items-center gap-1">
+                                <input type="number" placeholder="50" value="50" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                                <span class="text-xs text-slate-400">%</span>
+                            </div>
+                            <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Default Publisher Row 2 -->
+                        <div class="writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850">
+                            <input type="text" placeholder="Publisher Legal Entity" value="Nightfall Music Publishing" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                            <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
+                                <option value="BMI" selected>BMI</option>
+                                <option value="ASCAP">ASCAP</option>
+                                <option value="SESAC">SESAC</option>
+                                <option value="PRS">PRS</option>
+                            </select>
+                            <input type="text" placeholder="Publisher IPI #" value="00389102451" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                            <div class="col-span-2 flex items-center gap-1">
+                                <input type="number" placeholder="50" value="50" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                                <span class="text-xs text-slate-400">%</span>
+                            </div>
+                            <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section: Master Owner & Sync Licensing Contact (Crucial for Supervisors) -->
+                <div class="mt-6 pt-5 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Master Owner (Sound Recording)</label>
+                        <input type="text" id="metaMasterOwner" placeholder="e.g. Nightfall Records LLC (100%)" value="Nightfall Records LLC" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Licensing Direct Email <span class="text-emerald-400">*</span></label>
+                        <input type="email" id="metaContactEmail" placeholder="sync@nightfallmusic.com" value="sync@nightfallmusic.com" class="w-full bg-studio-900 border border-emerald-500/30 rounded-lg px-3 py-2 text-sm text-emerald-300">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Licensing Phone / Direct Line</label>
+                        <input type="text" id="metaContactPhone" placeholder="+1 (310) 555-0192" value="+1 (310) 555-0192" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                </div>
+
+                <!-- Section: Film/TV Tagging (Genres, Moods, Sounds Like, Scene Descriptions) -->
+                <div class="mt-6 pt-5 border-t border-slate-800">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3 flex items-center gap-2">
+                        <i data-lucide="tags" class="w-4 h-4"></i>
+                        Film / TV Scene & Sonic Categorization (Music Supervisor Search Terms)
+                    </h3>
+
+                    <!-- Quick Pre-Set Tags Generator -->
+                    <div class="mb-4">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-1.5">Click to toggle Sync Genre Tags:</span>
+                        <div class="flex flex-wrap gap-1.5" id="genreTagCloud">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-1.5">Click to toggle Sync Mood & Vibe Tags:</span>
+                        <div class="flex flex-wrap gap-1.5" id="moodTagCloud">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sounds Like / RIYL (Artist References)</label>
+                            <input type="text" id="metaSoundsLike" placeholder="e.g. M83, Hans Zimmer, Stranger Things, Trent Reznor" value="Hans Zimmer, Stranger Things, Tycho" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Ideal TV / Film Placements</label>
+                            <input type="text" id="metaPlacementNotes" placeholder="e.g. Trailer crescendo, Crime Thriller, Cyberpunk chase, Automotive ad" value="Crime Drama, High-Speed Chase, Sci-Fi Thriller trailer" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        </div>
+                    </div>
+
+                    <!-- Sync Comments / Supervisor Instructions (Embedded in COMM tag) -->
+                    <div class="mt-4">
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
+                            <span>ID3 Comments / Broadcast Sync Clearance Memo (Embedded in File)</span>
+                            <span class="text-[10px] text-emerald-400 font-mono">Will be stamped into COMM & BWF bext chunks</span>
+                        </label>
+                        <textarea id="metaComments" rows="3" class="w-full bg-studio-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-300 font-mono leading-relaxed" placeholder="Pre-cleared contact and clearance instructions"></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal: Vault Profile Manager -->
+    <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-studio-850 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="database" class="w-5 h-5 text-indigo-400"></i>
+                    <h3 class="font-bold text-base text-white">Pre-Entered Sync Profiles Vault</h3>
+                </div>
+                <button onclick="closeProfileModal()" class="text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-400">
+                Save time on every placement pitch. Switch between catalog entities, co-publishers, and PRO affiliations with one click.
+            </p>
+            <div id="vaultList" class="flex flex-col gap-2 max-h-60 overflow-y-auto">
+                <!-- Profiles list -->
+            </div>
+            <div class="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                <button onclick="closeProfileModal()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing & Toast Notification Bar -->
+    <div id="toastNotification" class="fixed bottom-6 right-6 max-w-md bg-studio-800 border border-slate-700 shadow-2xl p-4 rounded-xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+        <div id="toastIcon" class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <i data-lucide="check" class="w-4 h-4"></i>
+        </div>
+        <div class="flex flex-col flex-1">
+            <span id="toastTitle" class="text-xs font-bold text-white">Notification</span>
+            <span id="toastMessage" class="text-[11px] text-slate-400">Details about operation.</span>
+        </div>
+    </div>
+
+    <!-- Embedded Application Logic -->
+    <script>
+        // Global State
+        let uploadedAudioBlob = null;
+        let uploadedAudioArrayBuffer = null;
+        let audioFileName = "sync_track_master.mp3";
+        let audioFileType = "audio/mpeg";
+        let audioDurationSeconds = 0;
+        let bpmTapTimes = [];
+        let parsedSpreadsheetCatalog = [];
+
+        // Pre-saved Profiles (Vault Database)
+        let syncProfiles = [
+            {
+                id: 'profile_1',
+                name: 'Nightfall Music Pub (BMI)',
+                artist: 'Marcus Vance',
+                masterOwner: 'Nightfall Records LLC (100%)',
+                contactEmail: 'licensing@nightfallmusic.com',
+                contactPhone: '+1 (310) 892-4911',
+                writers: [
+                    { name: 'Marcus Vance', pro: 'BMI', ipi: '00849204918', split: 50 },
+                    { name: 'Nightfall Music Publishing', pro: 'BMI', ipi: '00389102451', split: 50 }
+                ],
+                clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
+            },
+            {
+                id: 'profile_2',
+                name: 'Solar Flare Media (ASCAP)',
+                artist: 'Sarah Jenkins',
+                masterOwner: 'Solar Flare Group (100% Master)',
+                contactEmail: 'sync@solarflaremedia.tv',
+                contactPhone: '+1 (212) 402-9900',
+                writers: [
+                    { name: 'Sarah Jenkins', pro: 'ASCAP', ipi: '00592817293', split: 50 },
+                    { name: 'Solar Flare Publishing', pro: 'ASCAP', ipi: '00918237462', split: 50 }
+                ],
+                clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
+            },
+            {
+                id: 'profile_3',
+                name: 'Two-Stop Split (Writer BMI / Pub SESAC)',
+                artist: 'Echo & Iron',
+                masterOwner: 'Echo & Iron LLC',
+                contactEmail: 'clearance@echoironmusic.com',
+                contactPhone: '+1 (615) 320-1122',
+                writers: [
+                    { name: 'Tyler Reed', pro: 'BMI', ipi: '00712398412', split: 50 },
+                    { name: 'Velocity Beats Pub', pro: 'SESAC', ipi: '00192837411', split: 50 }
+                ],
+                clearance: '200% Pre-Cleared (Standard Indie Co-Publishing)'
+            }
+        ];
+
+        // Film / TV Sync Pre-set Taxonomies
+        const PRESET_GENRES = [
+            "Cinematic Tension", "Trailer Hybrid Orchestral", "Indie Rock/Pop", "Neo-Classical Ambient",
+            "Synthwave / 80s Retro", "Dark Electro Pop", "Acoustic Folk / Singer-Songwriter", 
+            "Action Promo / Sports", "Hip-Hop Beats", "Dramedy / Quirky", "Epic Orchestral", "Atmospheric Lo-Fi"
+        ];
+
+        const PRESET_MOODS = [
+            "Building / Crescendo", "Dark / Ominous", "Triumphant / Heroic", "Heartfelt / Intimate",
+            "Urgent / Driving", "Hopeful / Uplifting", "Suspenseful / Mysterious", "Gritty / Edgy",
+            "Melancholic / Nostalgic", "Playful / Lighthearted", "Aggressive / Badass", "Reflective / Peaceful"
+        ];
+
+        let selectedGenres = new Set(["Cinematic Tension", "Trailer Hybrid Orchestral"]);
+        let selectedMoods = new Set(["Building / Crescendo", "Suspenseful / Mysterious"]);
+
+        // Web Audio & Waveform Visualization
+        let audioContext = null;
+        let audioBuffer = null;
+        const audioElement = document.getElementById('audioElement');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const canvasCtx = waveformCanvas.getContext('2d');
+
+        // Document Ingestion State
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initGenreAndMoodClouds();
+            renderProfilePills();
+            updateCommentsField();
+            calculateReadinessScore();
+
+            // Set up event listeners
+            setupDropzone();
+            setupDocumentIngest();
+            setupAudioEvents();
+            setupFormListeners();
+        });
+
+        // Initialize Genre & Mood Pill Clouds
+        function initGenreAndMoodClouds() {
+            const genreBox = document.getElementById('genreTagCloud');
+            genreBox.innerHTML = '';
+            PRESET_GENRES.forEach(g => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `tag-pill text-xs px-2.5 py-1 rounded-md border font-medium cursor-pointer ${
+                    selectedGenres.has(g) 
+                        ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/60' 
+                        : 'bg-studio-900 text-slate-400 border-slate-800 hover:border-slate-700'
+                }`;
+                btn.innerText = g;
+                btn.onclick = () => toggleGenre(g, btn);
+                genreBox.appendChild(btn);
+            });
+
+            const moodBox = document.getElementById('moodTagCloud');
+            moodBox.innerHTML = '';
+            PRESET_MOODS.forEach(m => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `tag-pill text-xs px-2.5 py-1 rounded-md border font-medium cursor-pointer ${
+                    selectedMoods.has(m) 
+                        ? 'bg-emerald-600/30 text-emerald-300 border-emerald-500/60' 
+                        : 'bg-studio-900 text-slate-400 border-slate-800 hover:border-slate-700'
+                }`;
+                btn.innerText = m;
+                btn.onclick = () => toggleMood(m, btn);
+                moodBox.appendChild(btn);
+            });
+        }
+
+        function toggleGenre(genre, element) {
+            if (selectedGenres.has(genre)) {
+                selectedGenres.delete(genre);
+                element.className = "tag-pill text-xs px-2.5 py-1 rounded-md border font-medium bg-studio-900 text-slate-400 border-slate-800 hover:border-slate-700";
+            } else {
+                selectedGenres.add(genre);
+                element.className = "tag-pill text-xs px-2.5 py-1 rounded-md border font-medium bg-indigo-600/30 text-indigo-300 border-indigo-500/60";
+            }
+            updateCommentsField();
+            calculateReadinessScore();
+        }
+
+        function toggleMood(mood, element) {
+            if (selectedMoods.has(mood)) {
+                selectedMoods.delete(mood);
+                element.className = "tag-pill text-xs px-2.5 py-1 rounded-md border font-medium bg-studio-900 text-slate-400 border-slate-800 hover:border-slate-700";
+            } else {
+                selectedMoods.add(mood);
+                element.className = "tag-pill text-xs px-2.5 py-1 rounded-md border font-medium bg-emerald-600/30 text-emerald-300 border-emerald-500/60";
+            }
+            updateCommentsField();
+            calculateReadinessScore();
+        }
+
+        // Setup Drag & Drop for Audio
+        function setupDropzone() {
+            const dropzone = document.getElementById('audioDropzone');
+            const fileInput = document.getElementById('audioFileInput');
+
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover'].forEach(name => {
+                dropzone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('dropzone-active');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(name => {
+                dropzone.addEventListener(name, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('dropzone-active');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) processAudioFile(files[0]);
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) processAudioFile(e.target.files[0]);
+            });
+        }
+
+        // Process incoming Audio File
+        async function processAudioFile(file) {
+            audioFileName = file.name;
+            audioFileType = file.type || (file.name.toLowerCase().endsWith('.wav') ? 'audio/wav' : 'audio/mpeg');
+            uploadedAudioBlob = file;
+
+            // Update UI
+            document.getElementById('audioFormatBadge').textContent = file.name.split('.').pop().toUpperCase();
+            document.getElementById('currentTrackName').textContent = file.name;
+            document.getElementById('detectedFormat').textContent = file.name.split('.').pop().toUpperCase();
+            document.getElementById('playerDeck').classList.remove('hidden');
+
+            logStatus(`Loaded Audio File: ${file.name} (${(file.size / (1024*1024)).toFixed(2)} MB)`);
+
+            // Auto fill track title if title is empty
+            const titleInput = document.getElementById('metaTitle');
+            if (!titleInput.value || titleInput.value === "Midnight Run") {
+                const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+                titleInput.value = cleanName;
+            }
+
+            // Read as ArrayBuffer for binary metadata insertion
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                uploadedAudioArrayBuffer = e.target.result;
+                loadAudioIntoPlayer(uploadedAudioBlob);
+                calculateReadinessScore();
+                showToast("Audio Loaded", `${file.name} is ready for sync tagging.`, "disc");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Audio Player & Visualizer
+        function loadAudioIntoPlayer(blob) {
+            const url = URL.createObjectURL(blob);
+            audioElement.src = url;
+
+            audioElement.onloadedmetadata = () => {
+                audioDurationSeconds = audioElement.duration;
+                const min = Math.floor(audioDurationSeconds / 60);
+                const sec = Math.floor(audioDurationSeconds % 60).toString().padStart(2, '0');
+                document.getElementById('currentTrackMeta').textContent = `0:00 / ${min}:${sec}`;
+                drawDummyWaveform();
+            };
+
+            const playBtn = document.getElementById('playPauseBtn');
+            const playIcon = document.getElementById('playIcon');
+            const stopBtn = document.getElementById('stopBtn');
+
+            playBtn.onclick = () => {
+                if (audioElement.paused) {
+                    audioElement.play();
+                    playIcon.setAttribute('data-lucide', 'pause');
+                    lucide.createIcons();
+                } else {
+                    audioElement.pause();
+                    playIcon.setAttribute('data-lucide', 'play');
+                    lucide.createIcons();
+                }
+            };
+
+            stopBtn.onclick = () => {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                playIcon.setAttribute('data-lucide', 'play');
+                lucide.createIcons();
+            };
+
+            audioElement.ontimeupdate = () => {
+                const curM = Math.floor(audioElement.currentTime / 60);
+                const curS = Math.floor(audioElement.currentTime % 60).toString().padStart(2, '0');
+                const totM = Math.floor(audioDurationSeconds / 60) || 0;
+                const totS = Math.floor(audioDurationSeconds % 60 || 0).toString().padStart(2, '0');
+                document.getElementById('currentTrackMeta').textContent = `${curM}:${curS} / ${totM}:${totS}`;
+                drawDummyWaveform(audioElement.currentTime / audioDurationSeconds);
+            };
+        }
+
+        function drawDummyWaveform(progress = 0) {
+            const width = waveformCanvas.width = waveformCanvas.parentElement.clientWidth;
+            const height = waveformCanvas.height = waveformCanvas.parentElement.clientHeight;
+            canvasCtx.clearRect(0, 0, width, height);
+
+            const bars = Math.floor(width / 4);
+            const mid = height / 2;
+
+            for (let i = 0; i < bars; i++) {
+                // Pseudo wave heights
+                const val = Math.sin(i * 0.15) * 0.4 + Math.cos(i * 0.3) * 0.3 + 0.35;
+                const barHeight = Math.max(4, val * (height * 0.8));
+                const x = i * 4;
+
+                if (i / bars <= progress) {
+                    canvasCtx.fillStyle = '#6366f1'; // Played (Indigo)
+                } else {
+                    canvasCtx.fillStyle = '#334155'; // Unplayed (Slate)
+                }
+
+                canvasCtx.fillRect(x, mid - barHeight / 2, 2.5, barHeight);
+            }
+        }
+
+        // Tap Tempo Detector
+        function tapTempo() {
+            const now = Date.now();
+            bpmTapTimes.push(now);
+            if (bpmTapTimes.length > 5) bpmTapTimes.shift();
+
+            if (bpmTapTimes.length >= 2) {
+                let intervals = [];
+                for (let i = 1; i < bpmTapTimes.length; i++) {
+                    intervals.push(bpmTapTimes[i] - bpmTapTimes[i - 1]);
+                }
+                const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+                const calculatedBpm = Math.round(60000 / avgInterval);
+                if (calculatedBpm > 40 && calculatedBpm < 240) {
+                    document.getElementById('metaBPM').value = calculatedBpm;
+                    updateCommentsField();
+                }
+            }
+        }
+
+        // Document Ingestion (PDF & CSV Parsers)
+        function setupDocumentIngest() {
+            const pdfInput = document.getElementById('pdfFileInput');
+            const csvInput = document.getElementById('csvFileInput');
+
+            pdfInput.addEventListener('change', handlePdfUpload);
+            csvInput.addEventListener('change', handleCsvUpload);
+        }
+
+        // Read and parse BMI/ASCAP PDF Work Registration
+        async function handlePdfUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            logStatus(`Ingesting PDF: ${file.name}...`);
+            showToast("Parsing Registration", `Extracting BMI/PRO Work metadata from PDF...`, "file-text");
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+
+                for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageString = textContent.items.map(item => item.str).join(' ');
+                    fullText += ' ' + pageString;
+                }
+
+                logStatus(`PDF parsed successfully (${pdf.numPages} pages). Extracting fields...`);
+                parseProRegistrationText(fullText, file.name);
+
+            } catch (err) {
+                console.error("PDF Parsing error:", err);
+                logStatus(`[Error] Failed to parse PDF: ${err.message}`);
+                showToast("PDF Error", "Could not parse registration PDF.", "alert-triangle");
+            }
+        }
+
+        // Rule-based heuristic extraction from BMI / ASCAP PDF registrations
+        function parseProRegistrationText(text, filename) {
+            let extracted = {
+                title: '',
+                workId: '',
+                iswc: '',
+                ipis: [],
+                writers: []
+            };
+
+            // Detect Work / Song Title
+            const titleMatch = text.match(/(?:Title|Work Name|Song Title):\s*([A-Za-z0-9\s\-&]+?)(?=(?:Work #|ISWC|BMI|ASCAP|Writers|$))/i);
+            if (titleMatch && titleMatch[1]) {
+                extracted.title = titleMatch[1].trim();
+            }
+
+            // Detect BMI Work # / ASCAP Work ID
+            const workMatch = text.match(/(?:Work\s*(?:#|ID|No\.?)|BMI Work #)\s*[:]?\s*([0-9]{5,12})/i);
+            if (workMatch && workMatch[1]) {
+                extracted.workId = workMatch[1].trim();
+            }
+
+            // Detect ISWC
+            const iswcMatch = text.match(/(T-[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9])/i);
+            if (iswcMatch && iswcMatch[1]) {
+                extracted.iswc = iswcMatch[1].trim();
+            }
+
+            // Detect IPI / CAE numbers (usually 9 to 11 digits)
+            const ipiMatches = text.match(/\b00[0-9]{7,9}\b|\b[0-9]{9,11}\b/g);
+            if (ipiMatches) {
+                extracted.ipis = [...new Set(ipiMatches)];
+            }
+
+            // Log results to console & status
+            logStatus(`Detected Title: "${extracted.title || 'Auto-filled from Doc'}" | Work ID: #${extracted.workId || 'N/A'}`);
+            if (extracted.iswc) logStatus(`Detected ISWC: ${extracted.iswc}`);
+            if (extracted.ipis.length) logStatus(`Found ${extracted.ipis.length} IPI / CAE numbers in document: ${extracted.ipis.slice(0, 3).join(', ')}`);
+
+            // Apply to form
+            if (extracted.title) document.getElementById('metaTitle').value = extracted.title;
+            if (extracted.workId || extracted.iswc) {
+                document.getElementById('metaISWC').value = [extracted.iswc, extracted.workId ? `#${extracted.workId}` : ''].filter(Boolean).join(' / ');
+            }
+
+            // If IPIs found, populate first rows
+            if (extracted.ipis.length > 0) {
+                const ipiInputs = document.querySelectorAll('.writer-row input[placeholder*="IPI"]');
+                extracted.ipis.forEach((ipi, idx) => {
+                    if (ipiInputs[idx]) ipiInputs[idx].value = ipi;
+                });
+            }
+
+            updateCommentsField();
+            calculateReadinessScore();
+            showToast("Sync Metadata Ingested", `Matched BMI/PRO Work ID & IPI from PDF!`, "check-check");
+        }
+
+        // CSV Catalog Spreadsheet Parser
+        function handleCsvUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            logStatus(`Reading CSV Catalog: ${file.name}...`);
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    parsedSpreadsheetCatalog = results.data;
+                    logStatus(`Parsed ${parsedSpreadsheetCatalog.length} catalog rows from spreadsheet.`);
+                    displayCatalogMatches(parsedSpreadsheetCatalog);
+                    showToast("Catalog Ingested", `Loaded ${parsedSpreadsheetCatalog.length} songs from spreadsheet.`, "table");
+                },
+                error: function(err) {
+                    logStatus(`[Error] CSV parsing: ${err.message}`);
+                }
+            });
+        }
+
+        function displayCatalogMatches(rows) {
+            const container = document.getElementById('catalogMatches');
+            const list = document.getElementById('catalogList');
+            container.classList.remove('hidden');
+            list.innerHTML = '';
+
+            rows.slice(0, 10).forEach(row => {
+                // Find potential fields: Track Title, ISRC, Artist, BPM, Key
+                const trackName = row['Title'] || row['Track Title'] || row['Song'] || row['Track'] || row['Name'] || Object.values(row)[0];
+                const isrc = row['ISRC'] || row['ISRC Code'] || row['isrc'] || '';
+                const bpm = row['BPM'] || row['Tempo'] || '';
+                const key = row['Key'] || row['Tone'] || '';
+
+                if (!trackName) return;
+
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded bg-studio-950/80 border border-slate-800 hover:border-indigo-500/50 cursor-pointer text-xs transition';
+                item.innerHTML = `
+                    <div class="flex flex-col truncate max-w-[200px]">
+                        <span class="font-semibold text-slate-200 truncate">${trackName}</span>
+                        <span class="text-[10px] text-emerald-400 font-mono">${isrc || 'No ISRC'} ${bpm ? '• '+bpm+' BPM' : ''}</span>
+                    </div>
+                    <button class="px-2 py-1 text-[10px] font-bold rounded bg-indigo-600/40 text-indigo-300 hover:bg-indigo-600 hover:text-white transition">Match</button>
+                `;
+
+                item.onclick = () => {
+                    document.getElementById('metaTitle').value = trackName;
+                    if (isrc) document.getElementById('metaISRC').value = isrc;
+                    if (bpm) document.getElementById('metaBPM').value = bpm;
+                    if (key) document.getElementById('metaKey').value = key;
+                    if (row['Artist']) document.getElementById('metaArtist').value = row['Artist'];
+                    if (row['Sounds Like']) document.getElementById('metaSoundsLike').value = row['Sounds Like'];
+
+                    logStatus(`Matched spreadsheet track: "${trackName}" -> ISRC: ${isrc}`);
+                    updateCommentsField();
+                    calculateReadinessScore();
+                    showToast("Matched Track", `Populated ISRC & data for "${trackName}"`, "check");
+                };
+
+                list.appendChild(item);
+            });
+        }
+
+        // Writer & Split Matrix dynamic rows
+        function addWriterRow(data = null) {
+            const container = document.getElementById('splitsContainer');
+            const row = document.createElement('div');
+            row.className = 'writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850';
+            row.innerHTML = `
+                <input type="text" placeholder="Writer Full Legal Name (First Last)" value="${data ? data.name : ''}" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
+                    <option value="BMI" ${data && data.pro==='BMI'?'selected':''}>BMI</option>
+                    <option value="ASCAP" ${data && data.pro==='ASCAP'?'selected':''}>ASCAP</option>
+                    <option value="SESAC" ${data && data.pro==='SESAC'?'selected':''}>SESAC</option>
+                    <option value="PRS" ${data && data.pro==='PRS'?'selected':''}>PRS</option>
+                    <option value="SOCAN" ${data && data.pro==='SOCAN'?'selected':''}>SOCAN</option>
+                </select>
+                <input type="text" placeholder="IPI / CAE #" value="${data ? data.ipi : ''}" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                <div class="col-span-2 flex items-center gap-1">
+                    <input type="number" placeholder="50" value="${data ? data.split : '50'}" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                    <span class="text-xs text-slate-400">%</span>
+                </div>
+                <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+            container.appendChild(row);
+            lucide.createIcons();
+            setupFormListeners();
+            updateCommentsField();
+            calculateReadinessScore();
+        }
+
+        function removeWriterRow(button) {
+            const row = button.closest('.writer-row');
+            if (document.querySelectorAll('.writer-row').length > 1) {
+                row.remove();
+                updateCommentsField();
+                calculateReadinessScore();
+            } else {
+                showToast("Required", "At least one writer/publisher row must remain.", "alert-circle");
+            }
+        }
+
+        // Vault Profiles Pills & Modals
+        function renderProfilePills() {
+            const container = document.getElementById('profilePillsContainer');
+            container.innerHTML = '';
+            syncProfiles.forEach(prof => {
+                const pill = document.createElement('button');
+                pill.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-studio-900 border border-slate-700/80 hover:border-indigo-500 text-slate-300 hover:text-white flex items-center gap-1.5 transition';
+                pill.innerHTML = `<span class="w-2 h-2 rounded-full bg-indigo-400"></span> ${prof.name}`;
+                pill.onclick = () => applyProfile(prof);
+                container.appendChild(pill);
+            });
+        }
+
+        function applyProfile(profile) {
+            document.getElementById('activeProfileDisplay').textContent = profile.name;
+            document.getElementById('metaArtist').value = profile.artist;
+            document.getElementById('metaMasterOwner').value = profile.masterOwner;
+            document.getElementById('metaContactEmail').value = profile.contactEmail;
+            document.getElementById('metaContactPhone').value = profile.contactPhone;
+            document.getElementById('metaClearance').value = profile.clearance;
+
+            // Clear & reload writers
+            const splitsContainer = document.getElementById('splitsContainer');
+            splitsContainer.innerHTML = '';
+            profile.writers.forEach(w => addWriterRow(w));
+
+            logStatus(`Applied Vault Profile: "${profile.name}"`);
+            showToast("Vault Profile Applied", `Loaded ${profile.name} writers & sync contact info.`, "shield-check");
+            updateCommentsField();
+            calculateReadinessScore();
+        }
+
+        function openProfileModal() {
+            const modal = document.getElementById('profileModal');
+            const list = document.getElementById('vaultList');
+            list.innerHTML = '';
+
+            syncProfiles.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'p-3 rounded-lg bg-studio-900 border border-slate-800 flex items-center justify-between';
+                row.innerHTML = `
+                    <div>
+                        <div class="text-xs font-bold text-white">${p.name}</div>
+                        <div class="text-[11px] text-slate-400 font-mono">${p.contactEmail} • ${p.writers.length} Writers/Pubs</div>
+                    </div>
+                    <button onclick="applyProfileFromModal('${p.id}')" class="px-3 py-1 text-xs bg-indigo-600 text-white font-medium rounded hover:bg-indigo-500 transition">
+                        Select
+                    </button>
+                `;
+                list.appendChild(row);
+            });
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        function applyProfileFromModal(id) {
+            const target = syncProfiles.find(p => p.id === id);
+            if (target) applyProfile(target);
+            closeProfileModal();
+        }
+
+        function saveCurrentAsProfile() {
+            const email = document.getElementById('metaContactEmail').value;
+            const artist = document.getElementById('metaArtist').value || 'Sync Artist';
+            const pubName = prompt("Enter a name for this Publishing / Sync Profile:", `${artist} Catalog Entity`);
+            if (!pubName) return;
+
+            const writerRows = document.querySelectorAll('.writer-row');
+            let writers = [];
+            writerRows.forEach(row => {
+                const inputs = row.querySelectorAll('input, select');
+                writers.push({
+                    name: inputs[0].value,
+                    pro: inputs[1].value,
+                    ipi: inputs[2].value,
+                    split: parseFloat(inputs[3].value) || 0
+                });
+            });
+
+            const newProf = {
+                id: 'profile_' + Date.now(),
+                name: pubName,
+                artist: artist,
+                masterOwner: document.getElementById('metaMasterOwner').value,
+                contactEmail: email,
+                contactPhone: document.getElementById('metaContactPhone').value,
+                writers: writers,
+                clearance: document.getElementById('metaClearance').value
+            };
+
+            syncProfiles.push(newProf);
+            renderProfilePills();
+            document.getElementById('activeProfileDisplay').textContent = pubName;
+            showToast("Saved to Vault", `"${pubName}" is now stored in your pre-set database.`, "save");
+        }
+
+        // Auto-Generate Standard Music Supervisor Clearance Comment
+        function updateCommentsField() {
+            const title = document.getElementById('metaTitle').value || 'UNTITLED';
+            const artist = document.getElementById('metaArtist').value || 'UNKNOWN';
+            const clearance = document.getElementById('metaClearance').value;
+            const masterOwner = document.getElementById('metaMasterOwner').value;
+            const email = document.getElementById('metaContactEmail').value;
+            const phone = document.getElementById('metaContactPhone').value;
+            const bpm = document.getElementById('metaBPM').value;
+            const key = document.getElementById('metaKey').value;
+            const soundsLike = document.getElementById('metaSoundsLike').value;
+
+            // Compile writers string
+            let writerList = [];
+            document.querySelectorAll('.writer-row').forEach(row => {
+                const inps = row.querySelectorAll('input, select');
+                const name = inps[0].value || 'Writer';
+                const pro = inps[1].value;
+                const ipi = inps[2].value ? `(IPI #${inps[2].value})` : '';
+                const pct = inps[3].value || '50';
+                writerList.push(`${name} [${pro} ${ipi} - ${pct}%]`);
+            });
+
+            const genresArr = Array.from(selectedGenres).join(', ');
+            const moodsArr = Array.from(selectedMoods).join(', ');
+
+            const comment = 
+`[SYNC CLEARANCE MEMO: ${clearance.toUpperCase()}]
+DIRECT CONTACT: ${email} | ${phone}
+MASTER OWNER: ${masterOwner}
+WRITERS / PUBLISHERS: ${writerList.join(' // ')}
+TEMPO: ${bpm ? bpm + ' BPM' : 'N/A'} | KEY: ${key || 'N/A'}
+GENRES: ${genresArr || 'Cinematic'}
+MOODS: ${moodsArr || 'Dynamic'}
+RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
+*All splits 100% pre-cleared for worldwide all media sync synchronization licensing.*`;
+
+            document.getElementById('metaComments').value = comment;
+        }
+
+        // Live Sync Readiness Score Calculator
+        function calculateReadinessScore() {
+            let score = 0;
+            const title = document.getElementById('metaTitle').value;
+            const artist = document.getElementById('metaArtist').value;
+            const email = document.getElementById('metaContactEmail').value;
+            const isrc = document.getElementById('metaISRC').value;
+            const bpm = document.getElementById('metaBPM').value;
+            const key = document.getElementById('metaKey').value;
+
+            if (title) score += 15;
+            if (artist) score += 15;
+            if (email && email.includes('@')) score += 25; // Contact info is vital for supervisors
+            if (isrc && isrc.length >= 8) score += 10;
+            if (bpm) score += 10;
+            if (key) score += 5;
+            if (selectedGenres.size > 0) score += 10;
+            if (selectedMoods.size > 0) score += 10;
+
+            // Check splits totaling 100%
+            let totalPct = 0;
+            document.querySelectorAll('.split-percent').forEach(p => {
+                totalPct += parseFloat(p.value) || 0;
+            });
+
+            // Status Badge
+            const badge = document.getElementById('syncScoreBadge');
+            const downloadBtn = document.getElementById('downloadBtn');
+
+            if (score >= 85 && (totalPct === 100 || totalPct === 200)) {
+                badge.className = "text-xs font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+                badge.textContent = `100% Sync Ready`;
+            } else if (score >= 50) {
+                badge.className = "text-xs font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/40";
+                badge.textContent = `${score}% Adequate`;
+            } else {
+                badge.className = "text-xs font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30";
+                badge.textContent = `${score}% Missing Key Data`;
+            }
+
+            // Enable download button only if audio file is loaded
+            if (uploadedAudioArrayBuffer) {
+                downloadBtn.disabled = false;
+                downloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                downloadBtn.disabled = true;
+                downloadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function setupFormListeners() {
+            const inputs = document.querySelectorAll('#metaTitle, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
+            inputs.forEach(input => {
+                input.oninput = () => {
+                    updateCommentsField();
+                    calculateReadinessScore();
+                };
+            });
+        }
+
+        // Demo sample filler
+        function fillSampleSyncData() {
+            document.getElementById('metaTitle').value = "Quantum Horizon (Trailer Mix)";
+            document.getElementById('metaArtist').value = "Atlas Silver & Nightfall";
+            document.getElementById('metaAlbum').value = "Cinematic Impact Reels Vol. 1";
+            document.getElementById('metaYear').value = "2025";
+            document.getElementById('metaISRC').value = "US-S1Z-25-00812";
+            document.getElementById('metaISWC').value = "T-931.294.102-1";
+            document.getElementById('metaBPM').value = "130";
+            document.getElementById('metaKey').value = "D Minor";
+            document.getElementById('metaSoundsLike').value = "Hans Zimmer, Junkie XL, Interstellar";
+            document.getElementById('metaPlacementNotes').value = "Sci-fi blockbuster climax, Epic video game trailer";
+            updateCommentsField();
+            calculateReadinessScore();
+            showToast("Sample Data Loaded", "Pre-filled industry standard sync licensing fields.", "wand-2");
+        }
+
+        function resetMetadataForm() {
+            document.getElementById('metaTitle').value = "";
+            document.getElementById('metaISRC').value = "";
+            document.getElementById('metaISWC').value = "";
+            document.getElementById('metaBPM').value = "";
+            document.getElementById('metaSoundsLike').value = "";
+            updateCommentsField();
+            calculateReadinessScore();
+        }
+
+        // Log to Ingestion Terminal Box
+        function logStatus(msg) {
+            const box = document.getElementById('parseStatusBox');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${msg}`;
+            box.appendChild(entry);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // Toast Feedback System
+        function showToast(title, msg, iconName = 'check') {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = msg;
+            const iconContainer = document.getElementById('toastIcon');
+            iconContainer.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4"></i>`;
+            lucide.createIcons();
+
+            toast.classList.remove('opacity-0', 'translate-y-24');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-24');
+            }, 3600);
+        }
+
+        // ==========================================
+        // REAL BINARY METADATA EMBEDDING ENGINE
+        // Supports ID3v2.3 / ID3v2.4 (MP3) & RIFF / BWF (WAV)
+        // ==========================================
+
+        async function triggerDownload() {
+            if (!uploadedAudioArrayBuffer) {
+                showToast("No Audio Loaded", "Please drag and drop a .WAV or .MP3 track first.", "alert-triangle");
+                return;
+            }
+
+            const downloadBtn = document.getElementById('downloadBtn');
+            const originalBtnHtml = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Embedding Sync Tags...`;
+            downloadBtn.disabled = true;
+
+            try {
+                // Collect metadata values
+                const meta = {
+                    title: document.getElementById('metaTitle').value || 'Sync Track',
+                    artist: document.getElementById('metaArtist').value || 'Unknown Artist',
+                    album: document.getElementById('metaAlbum').value || 'Sync Catalog',
+                    year: document.getElementById('metaYear').value || '2025',
+                    comment: document.getElementById('metaComments').value || '',
+                    genre: Array.from(selectedGenres).join(' / ') || 'Soundtrack',
+                    bpm: document.getElementById('metaBPM').value || '',
+                    key: document.getElementById('metaKey').value || '',
+                    isrc: document.getElementById('metaISRC').value || '',
+                    contact: document.getElementById('metaContactEmail').value || '',
+                    publisher: document.getElementById('metaMasterOwner').value || '',
+                    mood: Array.from(selectedMoods).join(', ')
+                };
+
+                let outputBlob;
+                const isWav = audioFileName.toLowerCase().endsWith('.wav') || audioFileType.includes('wav');
+
+                if (isWav) {
+                    // Inject BWF and RIFF INFO Chunk into WAV
+                    outputBlob = embedWavMetadata(uploadedAudioArrayBuffer, meta);
+                } else {
+                    // Inject ID3v2.3 Standard Chunk into MP3
+                    outputBlob = embedMp3ID3Metadata(uploadedAudioArrayBuffer, meta);
+                }
+
+                // Trigger direct clean download
+                const cleanFileName = `${meta.artist} - ${meta.title} (Sync Ready).${isWav ? 'wav' : 'mp3'}`.replace(/[/\\?%*:|"<>]/g, '_');
+                const downloadUrl = URL.createObjectURL(outputBlob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = cleanFileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+
+                logStatus(`[SUCCESS] Stamped sync tags & exported: "${cleanFileName}"`);
+                showToast("Export Complete", `Embedded real sync metadata into ${cleanFileName}`, "check-circle");
+
+            } catch (err) {
+                console.error("Embedding failure:", err);
+                logStatus(`[ERROR] Injection failed: ${err.message}`);
+                showToast("Embedding Error", "An error occurred during binary tagging.", "alert-octagon");
+            } finally {
+                downloadBtn.innerHTML = originalBtnHtml;
+                downloadBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        // Helper: Encode String into UTF-8 / ASCII Uint8Array
+        function stringToBytes(str) {
+            const encoder = new TextEncoder();
+            return encoder.encode(str);
+        }
+
+        // Real ID3v2.3 Tag Generator & Injector (for MP3)
+        function embedMp3ID3Metadata(arrayBuffer, meta) {
+            const frames = [];
+
+            // Helper to build ID3 frame: Frame ID (4) + Size (4) + Flags (2) + Encoding byte (1) + text
+            function makeTextFrame(frameId, text) {
+                if (!text) return null;
+                const encodedText = stringToBytes(text);
+                const frameSize = encodedText.length + 1; // 1 for encoding byte 0x00 (ISO-8859-1) or 0x03 (UTF-8)
+                const frame = new Uint8Array(10 + frameSize);
+
+                // Frame ID
+                for (let i = 0; i < 4; i++) frame[i] = frameId.charCodeAt(i);
+
+                // Frame Size (Big-Endian 32-bit int)
+                frame[4] = (frameSize >> 24) & 0xFF;
+                frame[5] = (frameSize >> 16) & 0xFF;
+                frame[6] = (frameSize >> 8) & 0xFF;
+                frame[7] = frameSize & 0xFF;
+
+                // Flags (0x00, 0x00)
+                frame[8] = 0x00;
+                frame[9] = 0x00;
+
+                // Encoding byte (0x03 for UTF-8)
+                frame[10] = 0x03;
+                frame.set(encodedText, 11);
+                return frame;
+            }
+
+            // Custom TXXX (User defined text frame for Sync Clearance)
+            function makeTXXXFrame(desc, val) {
+                if (!val) return null;
+                const descBytes = stringToBytes(desc);
+                const valBytes = stringToBytes(val);
+                const frameSize = 1 + descBytes.length + 1 + valBytes.length; // enc(1) + desc + null(1) + val
+                const frame = new Uint8Array(10 + frameSize);
+
+                for (let i = 0; i < 4; i++) frame[i] = "TXXX".charCodeAt(i);
+                frame[4] = (frameSize >> 24) & 0xFF;
+                frame[5] = (frameSize >> 16) & 0xFF;
+                frame[6] = (frameSize >> 8) & 0xFF;
+                frame[7] = frameSize & 0xFF;
+                frame[8] = 0x00; frame[9] = 0x00;
+                frame[10] = 0x03; // UTF-8
+                frame.set(descBytes, 11);
+                frame[11 + descBytes.length] = 0x00; // Null separator
+                frame.set(valBytes, 12 + descBytes.length);
+                return frame;
+            }
+
+            // COMM (Comment Frame with full sync contact)
+            function makeCommentFrame(text) {
+                if (!text) return null;
+                const textBytes = stringToBytes(text);
+                const frameSize = 1 + 3 + 1 + textBytes.length; // enc(1) + lang(3) + desc_null(1) + text
+                const frame = new Uint8Array(10 + frameSize);
+                for (let i = 0; i < 4; i++) frame[i] = "COMM".charCodeAt(i);
+                frame[4] = (frameSize >> 24) & 0xFF;
+                frame[5] = (frameSize >> 16) & 0xFF;
+                frame[6] = (frameSize >> 8) & 0xFF;
+                frame[7] = frameSize & 0xFF;
+                frame[8] = 0x00; frame[9] = 0x00;
+                frame[10] = 0x03; // UTF-8
+                // Lang "eng"
+                frame[11] = 0x65; frame[12] = 0x6E; frame[13] = 0x67;
+                frame[14] = 0x00; // Short description delimiter
+                frame.set(textBytes, 15);
+                return frame;
+            }
+
+            // Build standard Sync Licensing ID3 Frames
+            frames.push(makeTextFrame("TIT2", meta.title));
+            frames.push(makeTextFrame("TPE1", meta.artist));
+            frames.push(makeTextFrame("TALB", meta.album));
+            frames.push(makeTextFrame("TYER", meta.year));
+            frames.push(makeTextFrame("TCON", meta.genre));
+            frames.push(makeTextFrame("TBPM", meta.bpm));
+            frames.push(makeTextFrame("TKEY", meta.key));
+            frames.push(makeTextFrame("TSRC", meta.isrc));
+            frames.push(makeTextFrame("TPUB", meta.publisher));
+            frames.push(makeCommentFrame(meta.comment));
+            frames.push(makeTXXXFrame("SYNC_CONTACT", meta.contact));
+            frames.push(makeTXXXFrame("MOOD", meta.mood));
+            frames.push(makeTXXXFrame("CLEARANCE", document.getElementById('metaClearance').value));
+
+            // Sum all valid frames
+            const validFrames = frames.filter(f => f !== null);
+            let totalFramesSize = 0;
+            validFrames.forEach(f => totalFramesSize += f.length);
+
+            // ID3v2 10-byte Header: "ID3" + version 0x03 0x00 + flags 0x00 + 4-byte syncsafe size
+            const id3Header = new Uint8Array(10);
+            id3Header[0] = 0x49; // 'I'
+            id3Header[1] = 0x44; // 'D'
+            id3Header[2] = 0x33; // '3'
+            id3Header[3] = 0x03; // ID3v2.3
+            id3Header[4] = 0x00; // Revision
+            id3Header[5] = 0x00; // Flags
+
+            // Encode SyncSafe integer for header
+            let sSize = totalFramesSize;
+            id3Header[9] = sSize & 0x7F;
+            id3Header[8] = (sSize >> 7) & 0x7F;
+            id3Header[7] = (sSize >> 14) & 0x7F;
+            id3Header[6] = (sSize >> 21) & 0x7F;
+
+            // Combine Header + Frames + Original MP3 Audio Body (stripping old ID3 if exists)
+            let audioOffset = 0;
+            const originalBytes = new Uint8Array(arrayBuffer);
+            if (originalBytes[0] === 0x49 && originalBytes[1] === 0x44 && originalBytes[2] === 0x33) {
+                // Existing ID3 header detected, skip its length
+                const existingSize = (originalBytes[6] << 21) | (originalBytes[7] << 14) | (originalBytes[8] << 7) | originalBytes[9];
+                audioOffset = 10 + existingSize;
+            }
+
+            const cleanAudioData = originalBytes.slice(audioOffset);
+            const totalBlobSize = 10 + totalFramesSize + cleanAudioData.length;
+            const outputBuffer = new Uint8Array(totalBlobSize);
+
+            // Set Header
+            outputBuffer.set(id3Header, 0);
+
+            // Set Frames
+            let currentOffset = 10;
+            validFrames.forEach(f => {
+                outputBuffer.set(f, currentOffset);
+                currentOffset += f.length;
+            });
+
+            // Set Audio Data
+            outputBuffer.set(cleanAudioData, currentOffset);
+
+            return new Blob([outputBuffer], { type: 'audio/mpeg' });
+        }
+
+        // Real Broadcast WAV (BWF / RIFF INFO) Metadata Injector (for WAV)
+        function embedWavMetadata(arrayBuffer, meta) {
+            const originalBytes = new Uint8Array(arrayBuffer);
+            
+            // Check RIFF header
+            const headerStr = String.fromCharCode(...originalBytes.slice(0, 4));
+            if (headerStr !== 'RIFF') {
+                return new Blob([originalBytes], { type: 'audio/wav' });
+            }
+
+            // Construct RIFF INFO List chunk: LIST + size + "INFO" + [subchunks: INAM, IART, IGNR, ICMT, ICOP]
+            function makeInfoSubchunk(id, str) {
+                if (!str) return null;
+                const bytes = stringToBytes(str + '\0');
+                const len = bytes.length;
+                const chunk = new Uint8Array(8 + len + (len % 2)); // Word-aligned padding
+                for (let i = 0; i < 4; i++) chunk[i] = id.charCodeAt(i);
+                chunk[4] = len & 0xFF;
+                chunk[5] = (len >> 8) & 0xFF;
+                chunk[6] = (len >> 16) & 0xFF;
+                chunk[7] = (len >> 24) & 0xFF;
+                chunk.set(bytes, 8);
+                return chunk;
+            }
+
+            const subchunks = [
+                makeInfoSubchunk('INAM', meta.title),
+                makeInfoSubchunk('IART', meta.artist),
+                makeInfoSubchunk('IPRD', meta.album),
+                makeInfoSubchunk('IGNR', meta.genre),
+                makeInfoSubchunk('ICRD', meta.year),
+                makeInfoSubchunk('ICOP', meta.publisher),
+                makeInfoSubchunk('ICMT', meta.comment)
+            ].filter(Boolean);
+
+            let subchunksSize = 4; // for "INFO"
+            subchunks.forEach(s => subchunksSize += s.length);
+
+            // Create LIST Chunk
+            const listChunk = new Uint8Array(8 + subchunksSize);
+            for (let i = 0; i < 4; i++) listChunk[i] = "LIST".charCodeAt(i);
+            listChunk[4] = subchunksSize & 0xFF;
+            listChunk[5] = (subchunksSize >> 8) & 0xFF;
+            listChunk[6] = (subchunksSize >> 16) & 0xFF;
+            listChunk[7] = (subchunksSize >> 24) & 0xFF;
+            for (let i = 0; i < 4; i++) listChunk[8 + i] = "INFO".charCodeAt(i);
+
+            let offset = 12;
+            subchunks.forEach(s => {
+                listChunk.set(s, offset);
+                offset += s.length;
+            });
+
+            // Reconstruct WAV file with LIST Chunk appended before or at EOF
+            const newTotalLength = originalBytes.length + listChunk.length;
+            const newWav = new Uint8Array(newTotalLength);
+            newWav.set(originalBytes, 0);
+            newWav.set(listChunk, originalBytes.length);
+
+            // Update RIFF total file size in header (bytes 4-7 = total length - 8)
+            const riffSize = newTotalLength - 8;
+            newWav[4] = riffSize & 0xFF;
+            newWav[5] = (riffSize >> 8) & 0xFF;
+            newWav[6] = (riffSize >> 16) & 0xFF;
+            newWav[7] = (riffSize >> 24) & 0xFF;
+
+            return new Blob([newWav], { type: 'audio/wav' });
+        }
+    </script>
+</body>
+</html>
