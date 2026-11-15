@@ -420,6 +420,18 @@
                     </div>
                 </div>
 
+                <!-- Section: Record Label & Website / Portfolio (filled from Vault profile) -->
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Record Label</label>
+                        <input type="text" id="metaRecordLabel" placeholder="e.g. Zazie Productions LLC" value="" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Website / Portfolio</label>
+                        <input type="url" id="metaWebsite" placeholder="https://your-portfolio.com" value="" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                </div>
+
                 <!-- Section: Film/TV Tagging (Genres, Moods, Sounds Like, Scene Descriptions) -->
                 <div class="mt-6 pt-5 border-t border-slate-800">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-400 mb-3 flex items-center gap-2">
@@ -517,6 +529,21 @@
 
         // Pre-saved Profiles (Vault Database)
         let syncProfiles = [
+            {
+                id: 'profile_zazie',
+                name: 'Zazie Productions (BMI)',
+                artist: 'Zazie Productions',
+                masterOwner: 'Zazie Productions LLC (100%)',
+                recordLabel: 'Zazie Productions LLC',
+                website: 'https://horror.zazieproductions.com',
+                contactEmail: 'zaziediya@gmail.com',
+                contactPhone: '+1 (864) 430-0606',
+                writers: [
+                    { name: 'Zazie Productions', pro: 'BMI', ipi: '01280391067', split: 100 },
+                    { name: 'Zazie Productions Publishing', pro: 'BMI', ipi: '01372389230', split: 100 }
+                ],
+                clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
+            },
             {
                 id: 'profile_1',
                 name: 'Nightfall Music Pub (BMI)',
@@ -1033,6 +1060,8 @@
             document.getElementById('metaMasterOwner').value = profile.masterOwner;
             document.getElementById('metaContactEmail').value = profile.contactEmail;
             document.getElementById('metaContactPhone').value = profile.contactPhone;
+            document.getElementById('metaRecordLabel').value = profile.recordLabel || '';
+            document.getElementById('metaWebsite').value = profile.website || '';
             document.getElementById('metaClearance').value = profile.clearance;
 
             // Clear & reload writers
@@ -1102,6 +1131,8 @@
                 name: pubName,
                 artist: artist,
                 masterOwner: document.getElementById('metaMasterOwner').value,
+                recordLabel: document.getElementById('metaRecordLabel').value,
+                website: document.getElementById('metaWebsite').value,
                 contactEmail: email,
                 contactPhone: document.getElementById('metaContactPhone').value,
                 writers: writers,
@@ -1120,6 +1151,8 @@
             const artist = document.getElementById('metaArtist').value || 'UNKNOWN';
             const clearance = document.getElementById('metaClearance').value;
             const masterOwner = document.getElementById('metaMasterOwner').value;
+            const recordLabel = document.getElementById('metaRecordLabel').value;
+            const website = document.getElementById('metaWebsite').value;
             const email = document.getElementById('metaContactEmail').value;
             const phone = document.getElementById('metaContactPhone').value;
             const bpm = document.getElementById('metaBPM').value;
@@ -1143,7 +1176,7 @@
             const comment = 
 `[SYNC CLEARANCE MEMO: ${clearance.toUpperCase()}]
 DIRECT CONTACT: ${email} | ${phone}
-MASTER OWNER: ${masterOwner}
+MASTER OWNER: ${masterOwner}${recordLabel ? `\nRECORD LABEL: ${recordLabel}` : ''}${website ? `\nWEBSITE / PORTFOLIO: ${website}` : ''}
 WRITERS / PUBLISHERS: ${writerList.join(' // ')}
 TEMPO: ${bpm ? bpm + ' BPM' : 'N/A'} | KEY: ${key || 'N/A'}
 GENRES: ${genresArr || 'Cinematic'}
@@ -1205,7 +1238,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
         }
 
         function setupFormListeners() {
-            const inputs = document.querySelectorAll('#metaTitle, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
+            const inputs = document.querySelectorAll('#metaTitle, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaRecordLabel, #metaWebsite, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
             inputs.forEach(input => {
                 input.oninput = () => {
                     updateCommentsField();
