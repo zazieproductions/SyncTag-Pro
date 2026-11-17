@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420" role="img" aria-labelledby="scoreTitle scoreDesc">
+  <title id="scoreTitle">SyncTag Pro — Sync Readiness Scoring &amp; Export Gate Engine</title>
+  <desc id="scoreDesc">Diagram of SyncTag Pro's 100-point weighted Sync Readiness rubric across 8 metadata factors, combined with the 100%/200% writer-publisher split sum validator and the three status badge tiers: 100% Sync Ready (Emerald), Adequate (Indigo), and Missing Key Data (Amber).</desc>
+
+  <rect width="1200" height="420" rx="14" fill="#0b0c10"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="418.5" rx="13.25" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <text x="32" y="38" fill="#f8fafc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">SYNC READINESS RUBRIC &amp; CLEARANCE VALIDATION GATE</text>
+  <text x="1168" y="38" text-anchor="end" fill="#fcd34d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">calculateReadinessScore()  •  Real-Time Supervisor QA</text>
+
+  <!-- Left Panel: 100-Point Weighted Breakdown -->
+  <rect x="28" y="58" width="584" height="334" rx="12" fill="#111319" stroke="#1e293b"/>
+  <text x="48" y="84" fill="#e2e8f0" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" letter-spacing="0.5">WEIGHTED METADATA SCORE (MAX = 100 PTS)</text>
+
+  <!-- Bar 1: Licensing Email (+25) -->
+  <text x="48" y="114" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Licensing Email (contains "@")</text>
+  <rect x="258" y="101" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="101" width="280" height="18" rx="4" fill="#22c55e" fill-opacity="0.85"/>
+  <text x="590" y="114" text-anchor="end" fill="#4ade80" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+25 pts</text>
+
+  <!-- Bar 2: Track Title (+15) -->
+  <text x="48" y="148" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Track Title (#metaTitle)</text>
+  <rect x="258" y="135" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="135" width="168" height="18" rx="4" fill="#6366f1" fill-opacity="0.9"/>
+  <text x="590" y="148" text-anchor="end" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+15 pts</text>
+
+  <!-- Bar 3: Artist / Project (+15) -->
+  <text x="48" y="182" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Artist / Project (#metaArtist)</text>
+  <rect x="258" y="169" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="169" width="168" height="18" rx="4" fill="#6366f1" fill-opacity="0.9"/>
+  <text x="590" y="182" text-anchor="end" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+15 pts</text>
+
+  <!-- Bar 4: ISRC (+10) -->
+  <text x="48" y="216" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">ISRC Code (length &gt;= 8)</text>
+  <rect x="258" y="203" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="203" width="112" height="18" rx="4" fill="#14b8a6" fill-opacity="0.9"/>
+  <text x="590" y="216" text-anchor="end" fill="#5eead4" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+10 pts</text>
+
+  <!-- Bar 5: Tempo BPM (+10) -->
+  <text x="48" y="250" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Tempo BPM (#metaBPM)</text>
+  <rect x="258" y="237" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="237" width="112" height="18" rx="4" fill="#14b8a6" fill-opacity="0.9"/>
+  <text x="590" y="250" text-anchor="end" fill="#5eead4" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+10 pts</text>
+
+  <!-- Bar 6: Genre Tags (+10) -->
+  <text x="48" y="284" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Sync Genre Tags (&gt;= 1 active)</text>
+  <rect x="258" y="271" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="271" width="112" height="18" rx="4" fill="#818cf8" fill-opacity="0.9"/>
+  <text x="590" y="284" text-anchor="end" fill="#c7d2fe" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+10 pts</text>
+
+  <!-- Bar 7: Mood Tags (+10) -->
+  <text x="48" y="318" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Sync Mood Tags (&gt;= 1 active)</text>
+  <rect x="258" y="305" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="305" width="112" height="18" rx="4" fill="#34d399" fill-opacity="0.9"/>
+  <text x="590" y="318" text-anchor="end" fill="#6ee7b7" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">+10 pts</text>
+
+  <!-- Bar 8: Musical Key (+5) -->
+  <text x="48" y="352" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="600">Musical Key (#metaKey)</text>
+  <rect x="258" y="339" width="280" height="18" rx="4" fill="#171a23" stroke="#1e293b"/>
+  <rect x="258" y="339" width="56" height="18" rx="4" fill="#f59e0b" fill-opacity="0.9"/>
+  <text x="590" y="352" text-anchor="end" fill="#fcd34d" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700"> +5 pts</text>
+
+  <text x="48" y="378" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">Default boot score = 45 pts (Email 25 + Genres 10 + Moods 10)</text>
+
+  <!-- Right Panel: Split Gate + Status Tiers + Export Gate -->
+  <rect x="632" y="58" width="540" height="334" rx="12" fill="#111319" stroke="#1e293b"/>
+  <text x="652" y="84" fill="#e2e8f0" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="700" letter-spacing="0.5">STATUS TIERS &amp; SPLIT ACCOUNTING RULES</text>
+
+  <!-- Tier 1: Emerald -->
+  <rect x="652" y="100" width="500" height="66" rx="8" fill="#052e16" fill-opacity="0.7" stroke="#22c55e" stroke-width="1.4"/>
+  <text x="668" y="122" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="800">100% Sync Ready  (Emerald Tier)</text>
+  <text x="668" y="141" fill="#d1fae5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">score &gt;= 85  AND  (totalPct === 100 || totalPct === 200)</text>
+  <text x="668" y="156" fill="#86efac" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9">Supports both 100% combined splits (50/50) &amp; 200% PRO share notation (100W + 100P)</text>
+
+  <!-- Tier 2: Indigo -->
+  <rect x="652" y="178" width="500" height="62" rx="8" fill="#1e1b4b" fill-opacity="0.7" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="668" y="200" fill="#a5b4fc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="800">{score}% Adequate  (Indigo Tier)</text>
+  <text x="668" y="219" fill="#e0e7ff" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">score &gt;= 50  (when Tier 1 condition is not satisfied)</text>
+  <text x="668" y="233" fill="#a5b4fc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9">Core contact &amp; pitch info present; add ISRC/BPM/Key or balance split sum to 100%/200%</text>
+
+  <!-- Tier 3: Amber -->
+  <rect x="652" y="252" width="500" height="58" rx="8" fill="#451a03" fill-opacity="0.55" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="668" y="274" fill="#fcd34d" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="800">{score}% Missing Key Data  (Amber Tier)</text>
+  <text x="668" y="293" fill="#fde68a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">score &lt; 50</text>
+  <text x="752" y="293" fill="#fbbf24" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9">— Supervisor risks an "orphan track" without title, artist, or licensing email</text>
+
+  <!-- Binary Export Gate -->
+  <rect x="652" y="322" width="500" height="54" rx="8" fill="#171a23" stroke="#14b8a6" stroke-width="1.3"/>
+  <text x="668" y="343" fill="#5eead4" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="700">Binary Export Hardware Gate (#downloadBtn)</text>
+  <text x="668" y="362" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">enabled = Boolean(uploadedAudioArrayBuffer)  // non-blocking on score</text>
+</svg>

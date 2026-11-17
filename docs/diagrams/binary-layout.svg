@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 510" width="1200" height="510" role="img" aria-labelledby="binTitle binDesc">
+  <title id="binTitle">SyncTag Pro — Binary Container &amp; Metadata Chunk Layout</title>
+  <desc id="binDesc">Byte-level binary layout comparison of SyncTag Pro's MP3 ID3v2.3 tag injection (10-byte syncsafe header, 9 standard text frames, COMM memo frame, 3 TXXX sync frames, plus untouched MPEG audio frames) and WAV RIFF LIST/INFO injection (patched RIFF header, untouched fmt and PCM data chunks, plus 2-byte word-aligned LIST INFO subchunks).</desc>
+
+  <!-- Canvas -->
+  <rect width="1200" height="510" rx="14" fill="#0b0c10"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="508.5" rx="13.25" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <text x="32" y="38" fill="#f8fafc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">BINARY METADATA ENCODING SPECIFICATION — BYTE-EXACT CONTAINER LAYOUT</text>
+  <text x="1168" y="38" text-anchor="end" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">Uint8Array  •  UTF-8 TextEncoder  •  Zero Audio Re-encoding</text>
+
+  <!-- ================= PANEL A: MP3 ID3v2.3 ================= -->
+  <rect x="28" y="56" width="1144" height="206" rx="12" fill="#111319" stroke="#6366f1" stroke-opacity="0.5" stroke-width="1.5"/>
+  <rect x="46" y="68" width="66" height="22" rx="5" fill="#1e1b4b" stroke="#6366f1"/>
+  <text x="79" y="83" text-anchor="middle" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">.MP3</text>
+  <text x="124" y="83.5" fill="#f1f5f9" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700">ID3v2.3 Prepended Tag Stream</text>
+  <text x="1152" y="83.5" text-anchor="end" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10">embedMp3ID3Metadata(arrayBuffer, meta) -&gt; audio/mpeg</text>
+
+  <!-- Byte Blocks Row -->
+  <!-- 1. 10-byte Header -->
+  <rect x="46" y="104" width="214" height="72" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.4"/>
+  <text x="153" y="123" text-anchor="middle" fill="#c7d2fe" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">ID3v2 HEADER (10 B)</text>
+  <text x="153" y="141" text-anchor="middle" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">49 44 33 | 03 00 | 00</text>
+  <text x="153" y="156" text-anchor="middle" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">+ 4B Syncsafe Size (4x7b)</text>
+  <text x="153" y="169" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">Offset [0..9]</text>
+
+  <!-- 2. 9 Text Frames -->
+  <rect x="268" y="104" width="272" height="72" rx="8" fill="#171a23" stroke="#14b8a6" stroke-width="1.4"/>
+  <text x="404" y="123" text-anchor="middle" fill="#5eead4" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">9 STANDARD TEXT FRAMES</text>
+  <text x="404" y="140" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">TIT2 TPE1 TALB TYER TCON</text>
+  <text x="404" y="155" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">TBPM TKEY TSRC TPUB</text>
+  <text x="404" y="169" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">ID(4)+BE32(4)+Flg(2)+0x03+UTF8</text>
+
+  <!-- 3. COMM Frame -->
+  <rect x="548" y="104" width="204" height="72" rx="8" fill="#171a23" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="650" y="123" text-anchor="middle" fill="#fcd34d" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">COMM MEMO FRAME</text>
+  <text x="650" y="140" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">0x03 | "eng" | 0x00</text>
+  <text x="650" y="155" text-anchor="middle" fill="#fde68a" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">Full Sync Clearance Memo</text>
+  <text x="650" y="169" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">10B Hdr + 5B Prefix + Memo</text>
+
+  <!-- 4. 3 TXXX Frames -->
+  <rect x="760" y="104" width="206" height="72" rx="8" fill="#171a23" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="863" y="123" text-anchor="middle" fill="#a5b4fc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">3 CUSTOM TXXX FRAMES</text>
+  <text x="863" y="140" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">SYNC_CONTACT\0&lt;email&gt;</text>
+  <text x="863" y="154" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">MOOD\0...  CLEARANCE\0...</text>
+  <text x="863" y="169" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">0x03 + Desc + 0x00 + Value</text>
+
+  <!-- 5. Clean MPEG Frames -->
+  <rect x="974" y="104" width="178" height="72" rx="8" fill="#052e16" stroke="#22c55e" stroke-width="1.6"/>
+  <text x="1063" y="123" text-anchor="middle" fill="#86efac" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">MPEG AUDIO BODY</text>
+  <text x="1063" y="141" text-anchor="middle" fill="#d1fae5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">FF FB ... [EOF]</text>
+  <text x="1063" y="156" text-anchor="middle" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">Old ID3 cleanly stripped</text>
+  <text x="1063" y="169" text-anchor="middle" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">Bit-identical samples</text>
+
+  <!-- MP3 Detail Strip -->
+  <rect x="46" y="188" width="1106" height="58" rx="6" fill="#0d0f15" stroke="#1e293b"/>
+  <text x="60" y="209" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5"><tspan fill="#a5b4fc" font-weight="700">Frame Wire Format:</tspan>  [FrameID: 4B ASCII] [Size: 4B Big-Endian u32] [Flags: 0x0000] [Enc: 0x03 UTF-8] [Payload: N bytes]</text>
+  <text x="60" y="227" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5"><tspan fill="#4ade80" font-weight="700">Old Tag Stripping:</tspan>  If bytes[0..2] == "ID3", skip 10 + ((b[6]&lt;&lt;21)|(b[7]&lt;&lt;14)|(b[8]&lt;&lt;7)|b[9]) bytes before copying audio</text>
+  <text x="60" y="241" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">Empty metadata fields return null and are omitted automatically (zero empty/padding frames emitted).</text>
+
+  <!-- ================= PANEL B: WAV RIFF LIST/INFO ================= -->
+  <rect x="28" y="278" width="1144" height="206" rx="12" fill="#111319" stroke="#22c55e" stroke-opacity="0.5" stroke-width="1.5"/>
+  <rect x="46" y="290" width="66" height="22" rx="5" fill="#052e16" stroke="#22c55e"/>
+  <text x="79" y="305" text-anchor="middle" fill="#4ade80" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10.5" font-weight="700">.WAV</text>
+  <text x="124" y="305.5" fill="#f1f5f9" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="700">Broadcast WAV — RIFF LIST / INFO Appended Chunk</text>
+  <text x="1152" y="305.5" text-anchor="end" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="10">embedWavMetadata(arrayBuffer, meta) -&gt; audio/wav</text>
+
+  <!-- WAV Byte Blocks Row -->
+  <!-- 1. RIFF WAVE Header -->
+  <rect x="46" y="326" width="224" height="72" rx="8" fill="#171a23" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="158" y="345" text-anchor="middle" fill="#fcd34d" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">RIFF HEADER (12 B)</text>
+  <text x="158" y="362" text-anchor="middle" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">"RIFF" | LE32 Size | "WAVE"</text>
+  <text x="158" y="377" text-anchor="middle" fill="#fde68a" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">Size patched = totalLen - 8</text>
+  <text x="158" y="391" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">Offset [0..11]</text>
+
+  <!-- 2. Original fmt + data chunks -->
+  <rect x="278" y="326" width="286" height="72" rx="8" fill="#052e16" stroke="#22c55e" stroke-width="1.6"/>
+  <text x="421" y="345" text-anchor="middle" fill="#86efac" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">ORIGINAL PCM CHUNKS</text>
+  <text x="421" y="362" text-anchor="middle" fill="#d1fae5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">["fmt " ...] + ["data" PCM...]</text>
+  <text x="421" y="377" text-anchor="middle" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">16/24/32-bit 48kHz untouched</text>
+  <text x="421" y="391" text-anchor="middle" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">Offset [12..origLen-1]</text>
+
+  <!-- 3. LIST INFO Header -->
+  <rect x="572" y="326" width="186" height="72" rx="8" fill="#1e1b4b" stroke="#818cf8" stroke-width="1.4"/>
+  <text x="665" y="345" text-anchor="middle" fill="#c7d2fe" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">LIST HEADER (12 B)</text>
+  <text x="665" y="362" text-anchor="middle" fill="#f8fafc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">"LIST" | LE32 | "INFO"</text>
+  <text x="665" y="377" text-anchor="middle" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">4 + sum(subchunks)</text>
+  <text x="665" y="391" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">Appended at origLen</text>
+
+  <!-- 4. 7 INFO Subchunks -->
+  <rect x="766" y="326" width="386" height="72" rx="8" fill="#171a23" stroke="#14b8a6" stroke-width="1.4"/>
+  <text x="959" y="345" text-anchor="middle" fill="#5eead4" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10.5" font-weight="700">7 WORD-ALIGNED INFO SUBCHUNKS</text>
+  <text x="959" y="362" text-anchor="middle" fill="#e2e8f0" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">INAM  IART  IPRD  IGNR  ICRD  ICOP  ICMT</text>
+  <text x="959" y="377" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">Title • Artist • Album • Genre • Year • Master • Full Sync Memo</text>
+  <text x="959" y="391" text-anchor="middle" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8">FourCC(4) + LE32(len) + UTF8 + 0x00 + Pad(len%2)</text>
+
+  <!-- WAV Detail Strip -->
+  <rect x="46" y="410" width="1106" height="58" rx="6" fill="#0d0f15" stroke="#1e293b"/>
+  <text x="60" y="431" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5"><tspan fill="#5eead4" font-weight="700">Subchunk Wire Format:</tspan> [FourCC: 4B ASCII] [Len: 4B Little-Endian u32] [UTF-8 String + 0x00] [Optional 0x00 Even-Byte Pad]</text>
+  <text x="60" y="449" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5"><tspan fill="#fcd34d" font-weight="700">Container Safety:</tspan>    Non-RIFF inputs bypass mutation gracefully; RIFF master size updated atomically in Little-Endian</text>
+  <text x="60" y="463" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">Readable by Pro Tools, Logic Pro, Ableton, Reaper, Adobe Premiere, ffprobe, exiftool, DISCO &amp; broadcast asset managers.</text>
+</svg>
