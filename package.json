@@ -1,0 +1,43 @@
+{
+  "name": "synctag-pro",
+  "version": "1.1.0",
+  "description": "Zero-backend, client-side audio metadata injection engine (ID3v2.3 & Broadcast WAV RIFF LIST/INFO) and publisher/writer rights vault for Film, TV, Trailer, and Ad sync placements.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": {
+    "name": "Zazie Productions LLC",
+    "url": "https://horror.zazieproductions.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zazieproductions/SyncTag-Pro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zazieproductions/SyncTag-Pro/issues"
+  },
+  "homepage": "https://github.com/zazieproductions/SyncTag-Pro#readme",
+  "keywords": [
+    "sync-licensing",
+    "audio-metadata",
+    "id3v2",
+    "broadcast-wav",
+    "riff-info",
+    "music-supervision",
+    "isrc",
+    "iswc",
+    "bmi",
+    "ascap",
+    "film-scoring",
+    "client-side"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "lint:syntax": "node scripts/check-inline-js.mjs",
+    "verify": "npm run lint:syntax && npm test",
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1"
+  }
+}

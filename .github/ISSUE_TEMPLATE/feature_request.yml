@@ -1,0 +1,43 @@
+name: Feature Request
+description: Propose a new metadata standard (e.g., BWF bext, iXML, ID3v2.4, APIC artwork), parser enhancement, or sync workflow feature.
+title: "[Feat]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Binary Metadata Standard (BWF bext, iXML, ID3v2.4, AIFF, M4A, APIC Artwork)
+        - Smart Ingestion (SESAC/PRS/GEMA PDFs, Cue Sheets, DISCO/Excel Exports)
+        - Publisher / Writer Rights Vault (LocalStorage Persistence, JSON Import/Export)
+        - Batch / Multi-Stem Tagging & ZIP Export
+        - Audio Analysis (Real PCM Waveform, Auto-BPM/Key Detection)
+        - Accessibility / UI / UX Enhancement
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Music Supervision / Composer Use Case
+      description: What workflow friction does this solve when preparing tracks for Film/TV/Ad placements?
+      placeholder: "When delivering full stem packs (Main, Instrumental, TV Mix, 60s, 30s), tagging all 5 WAVs in one pass would save 10 minutes per cue..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: Describe the desired behavior, frame/chunk IDs, or UI interaction.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Architectural Alignment
+      options:
+        - label: This feature can run 100% client-side with zero server uploads of audio or rights documents.
+        - label: This feature preserves bit-exact audio data (no lossy re-encoding).

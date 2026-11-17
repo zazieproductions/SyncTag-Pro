@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 540" width="1200" height="540" role="img" aria-labelledby="archTitle archDesc">
+  <title id="archTitle">SyncTag Pro — Zero-Backend Client-Side System Architecture</title>
+  <desc id="archDesc">Architecture diagram showing local user inputs entering the browser sandbox, flowing through ingestion parsers, the rights vault and reactive metadata state hub, readiness validator and clearance memo compiler, into the binary ID3v2.3 and RIFF LIST/INFO muxers for direct local download with zero server egress.</desc>
+  <defs>
+    <marker id="arrowIndigo" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#6366f1"/>
+    </marker>
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#14b8a6"/>
+    </marker>
+    <marker id="arrowEmerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#22c55e"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#f59e0b"/>
+    </marker>
+  </defs>
+
+  <!-- Canvas -->
+  <rect width="1200" height="540" rx="14" fill="#0b0c10"/>
+  <rect x="0.75" y="0.75" width="1198.5" height="538.5" rx="13.25" fill="none" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <text x="32" y="38" fill="#f8fafc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="16" font-weight="800" letter-spacing="0.5">SYSTEM ARCHITECTURE — 100% CLIENT-SIDE ZERO-EGRESS PIPELINE</text>
+  <text x="1168" y="38" text-anchor="end" fill="#4ade80" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="11">0 API Calls  •  0 Cloud Uploads  •  Single-File HTML</text>
+
+  <!-- Privacy Sandbox Boundary -->
+  <rect x="24" y="56" width="1152" height="432" rx="12" fill="#111319" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="42" y="46" width="332" height="20" rx="5" fill="#052e16" stroke="#22c55e" stroke-opacity="0.5"/>
+  <text x="208" y="59.5" text-anchor="middle" fill="#4ade80" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5" font-weight="700">BROWSER MEMORY SANDBOX (NO NETWORK EGRESS)</text>
+
+  <!-- COLUMN 1: LOCAL FILE INPUTS -->
+  <text x="135" y="92" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">1. LOCAL INGESTION</text>
+
+  <!-- Box 1A: Master Audio -->
+  <rect x="44" y="106" width="182" height="96" rx="10" fill="#171a23" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="58" y="128" fill="#a5b4fc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">Master Audio Source</text>
+  <text x="58" y="147" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">.wav  .mp3  (.aiff .m4a)</text>
+  <text x="58" y="165" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• FileReader -&gt; ArrayBuffer</text>
+  <text x="58" y="180" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• HTML5 Audio + Canvas Deck</text>
+  <text x="58" y="194" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">processAudioFile()</text>
+
+  <!-- Box 1B: PRO PDF -->
+  <rect x="44" y="218" width="182" height="96" rx="10" fill="#171a23" stroke="#f87171" stroke-width="1.5"/>
+  <text x="58" y="240" fill="#fca5a5" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">PRO Registration PDF</text>
+  <text x="58" y="259" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">PDF.js v3.11.174 Worker</text>
+  <text x="58" y="277" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Scans first 5 pages</text>
+  <text x="58" y="292" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Regex: Title, Work#, ISWC, IPI</text>
+  <text x="58" y="306" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">parseProRegistrationText()</text>
+
+  <!-- Box 1C: Catalog CSV -->
+  <rect x="44" y="330" width="182" height="96" rx="10" fill="#171a23" stroke="#14b8a6" stroke-width="1.5"/>
+  <text x="58" y="352" fill="#5eead4" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">ISRC Catalog CSV/TSV</text>
+  <text x="58" y="371" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">PapaParse v5.4.1</text>
+  <text x="58" y="389" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Header-mapped row matcher</text>
+  <text x="58" y="404" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• ISRC, BPM, Key, Artist, RIYL</text>
+  <text x="58" y="418" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">displayCatalogMatches()</text>
+
+  <!-- COLUMN 2: RIGHTS VAULT & REACTIVE STATE HUB -->
+  <text x="415" y="92" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">2. VAULT &amp; METADATA HUB</text>
+
+  <!-- Box 2A: Publisher/Writer Vault -->
+  <rect x="286" y="106" width="258" height="114" rx="10" fill="#171a23" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="302" y="128" fill="#a5b4fc" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">Publisher / Writer Rights Vault</text>
+  <text x="302" y="147" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• 4 Built-in PRO Profiles (BMI / ASCAP / SESAC)</text>
+  <text x="302" y="163" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• + Custom session profiles (Save Active)</text>
+  <text x="302" y="179" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Auto-populates Writers, IPIs, Splits, Label,</text>
+  <text x="302" y="194" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">  Master Owner, Website &amp; Clearance Tier</text>
+  <text x="302" y="211" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">applyProfile()  •  saveCurrentAsProfile()</text>
+
+  <!-- Box 2B: Sync Metadata Editor State -->
+  <rect x="286" y="246" width="258" height="218" rx="10" fill="#1e1b4b" fill-opacity="0.45" stroke="#818cf8" stroke-width="1.8"/>
+  <text x="302" y="269" fill="#e0e7ff" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="800">Sync Metadata State Model</text>
+  <text x="302" y="290" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Core: Title, Version, Artist, Album, Year</text>
+  <text x="302" y="307" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• IDs: ISRC (12-char), ISWC / PRO Work #</text>
+  <text x="302" y="324" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Musical: BPM (+ 5-Tap Detector), Key, Explicit</text>
+  <text x="302" y="341" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Rights Matrix: N Writer/Pub rows (PRO, IPI, %)</text>
+  <text x="302" y="358" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Contacts: Master, Label, Email, Phone, URL</text>
+  <text x="302" y="375" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Taxonomy: 12 Genre Set + 12 Mood Set</text>
+  <text x="302" y="392" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Pitch: Sounds Like (RIYL) + Scene Notes</text>
+  <rect x="302" y="406" width="226" height="22" rx="4" fill="#111319" stroke="#4f46e5" stroke-opacity="0.5"/>
+  <text x="415" y="420.5" text-anchor="middle" fill="#a5b4fc" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">Reactive oninput -&gt; Memo + Score</text>
+  <text x="302" y="451" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">setupFormListeners()  •  tapTempo()</text>
+
+  <!-- COLUMN 3: VALIDATION & MEMO COMPILER -->
+  <text x="716" y="92" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">3. LIVE COMPILERS</text>
+
+  <!-- Box 3A: Sync Readiness Engine -->
+  <rect x="604" y="106" width="224" height="156" rx="10" fill="#171a23" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="620" y="128" fill="#fcd34d" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">Sync Readiness Scorer</text>
+  <text x="620" y="148" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">8-factor weighted score (0–100):</text>
+  <text x="620" y="165" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">Email +25 | Title +15 | Artist +15</text>
+  <text x="620" y="180" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">ISRC  +10 | BPM   +10 | Key    +5</text>
+  <text x="620" y="195" fill="#94a3b8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">Genre +10 | Mood  +10</text>
+  <text x="620" y="214" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5" font-weight="600">• &gt;=85 &amp; Splits 100/200% = Ready</text>
+  <text x="620" y="230" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Gates Export on AudioBuffer</text>
+  <text x="620" y="250" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">calculateReadinessScore()</text>
+
+  <!-- Box 3B: Clearance Memo Compiler -->
+  <rect x="604" y="284" width="224" height="142" rx="10" fill="#171a23" stroke="#14b8a6" stroke-width="1.5"/>
+  <text x="620" y="306" fill="#5eead4" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">Clearance Memo Compiler</text>
+  <text x="620" y="326" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">Synthesizes supervisor-ready block:</text>
+  <text x="620" y="343" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Clearance warranty banner</text>
+  <text x="620" y="359" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Direct email, phone, label, URL</text>
+  <text x="620" y="375" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Formatted Writer/PRO/IPI/% chain</text>
+  <text x="620" y="391" fill="#cbd5e1" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• BPM, Key, Genres, Moods, RIYL</text>
+  <text x="620" y="413" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">updateCommentsField()</text>
+
+  <!-- COLUMN 4: BINARY MUXERS & EXPORT -->
+  <text x="1022" y="92" text-anchor="middle" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="700" letter-spacing="0.8">4. BINARY TAG MUXERS</text>
+
+  <!-- Box 4A: MP3 ID3v2.3 Muxer -->
+  <rect x="888" y="106" width="268" height="122" rx="10" fill="#171a23" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="904" y="128" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">MP3 ID3v2.3 Binary Encoder</text>
+  <text x="904" y="147" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Strips old ID3 tag via syncsafe offset</text>
+  <text x="904" y="163" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Prepends 10B header + 13 UTF-8 frames</text>
+  <text x="904" y="179" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">TIT2 TPE1 TALB TYER TCON TBPM TKEY</text>
+  <text x="904" y="193" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">TSRC TPUB COMM + 3x TXXX (Sync)</text>
+  <text x="904" y="215" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">embedMp3ID3Metadata() • Zero re-encode</text>
+
+  <!-- Box 4B: WAV RIFF LIST/INFO Muxer -->
+  <rect x="888" y="242" width="268" height="122" rx="10" fill="#171a23" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="904" y="264" fill="#4ade80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="700">WAV RIFF LIST/INFO Encoder</text>
+  <text x="904" y="283" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Verifies RIFF magic + preserves PCM</text>
+  <text x="904" y="299" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Appends 2B word-aligned INFO subchunks</text>
+  <text x="904" y="315" fill="#cbd5e1" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">INAM IART IPRD IGNR ICRD ICOP ICMT</text>
+  <text x="904" y="331" fill="#94a3b8" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">• Patches LE32 RIFF size at bytes [4..7]</text>
+  <text x="904" y="351" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">embedWavMetadata() • Lossless PCM</text>
+
+  <!-- Box 4C: Blob Export -->
+  <rect x="888" y="382" width="268" height="82" rx="10" fill="#052e16" stroke="#22c55e" stroke-width="1.8"/>
+  <text x="904" y="405" fill="#86efac" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="11.5" font-weight="800">Broadcast-Ready File Download</text>
+  <text x="904" y="424" fill="#d1fae5" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9">Artist - Title (Sync Ready).wav|mp3</text>
+  <text x="904" y="442" fill="#6ee7b7" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="9.5">Sanitized filename • Instant revokeObjectURL()</text>
+  <text x="904" y="456" fill="#34d399" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">triggerDownload()</text>
+
+  <!-- CONNECTING ARROWS -->
+  <!-- Audio ArrayBuffer bypass across top to binary muxers -->
+  <path d="M 226 132 L 262 132 L 262 74 L 866 74 L 866 165 L 886 165" fill="none" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrowIndigo)"/>
+  <path d="M 866 165 L 866 300 L 886 300" fill="none" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrowIndigo)"/>
+  <text x="564" y="70" text-anchor="middle" fill="#818cf8" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5">Raw ArrayBuffer (Bit-Exact Audio Payload)</text>
+
+  <!-- Audio filename -> State -->
+  <path d="M 226 176 L 262 176 L 262 280 L 284 280" fill="none" stroke="#6366f1" stroke-width="1.5" marker-end="url(#arrowIndigo)"/>
+  <!-- PDF -> State -->
+  <path d="M 226 266 L 256 266 L 256 320 L 284 320" fill="none" stroke="#14b8a6" stroke-width="1.6" marker-end="url(#arrowTeal)"/>
+  <!-- CSV -> State -->
+  <path d="M 226 378 L 284 378" fill="none" stroke="#14b8a6" stroke-width="1.6" marker-end="url(#arrowTeal)"/>
+  <!-- Vault <-> State -->
+  <path d="M 415 220 L 415 244" fill="none" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrowIndigo)"/>
+
+  <!-- State -> Readiness -->
+  <path d="M 544 310 L 574 310 L 574 184 L 602 184" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#arrowAmber)"/>
+  <!-- State -> Memo -->
+  <path d="M 544 355 L 602 355" fill="none" stroke="#14b8a6" stroke-width="1.6" marker-end="url(#arrowTeal)"/>
+
+  <!-- Memo + State -> Muxers -->
+  <path d="M 828 355 L 854 355 L 854 195 L 886 195" fill="none" stroke="#22c55e" stroke-width="1.6" marker-end="url(#arrowEmerald)"/>
+  <path d="M 854 325 L 886 325" fill="none" stroke="#22c55e" stroke-width="1.6" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Muxers -> Download -->
+  <path d="M 1156 167 L 1166 167 L 1166 423 L 1158 423" fill="none" stroke="#22c55e" stroke-width="1.6" marker-end="url(#arrowEmerald)"/>
+  <path d="M 1022 364 L 1022 380" fill="none" stroke="#22c55e" stroke-width="1.8" marker-end="url(#arrowEmerald)"/>
+
+  <!-- Bottom CDN Legend Strip -->
+  <text x="32" y="518" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="9.5">Static CDN Libraries (loaded once on boot):  Tailwind CSS  •  PDF.js 3.11.174  •  PapaParse 5.4.1  •  Lucide Icons  •  Web File/Blob/TextEncoder APIs</text>
+</svg>

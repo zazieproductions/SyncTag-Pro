@@ -1,0 +1,63 @@
+name: Bug Report
+description: Report an issue with binary ID3/WAV embedding, PDF/CSV ingestion, Rights Vault, or UI behavior.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug in **SyncTag Pro**. Please never attach unreleased client masters or confidential licensing contracts — use synthetic audio or redacted PDFs/CSVs instead.
+
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Affected Subsystem
+      options:
+        - MP3 ID3v2.3 Binary Encoder
+        - WAV RIFF LIST/INFO Binary Encoder
+        - Audio Dropzone / Waveform Player
+        - BMI / ASCAP PDF Auto-Fill Parser
+        - ISRC Catalog CSV Matcher
+        - Publisher / Writer Rights Vault
+        - Sync Readiness Score / Clearance Memo
+        - Accessibility (Keyboard / Screen Reader / Contrast)
+        - Documentation / CI / Deployment
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Happened?
+      description: Concise description of the observed behavior versus what you expected.
+      placeholder: "Exported 24-bit/48kHz WAV opened in Logic Pro without showing the INAM title field..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open SyncTag Pro in Chrome 130
+        2. Drop a stereo 48kHz .wav file
+        3. Select Vault profile "Zazie Productions (BMI)"
+        4. Click "Embed & Export" and inspect with `ffprobe`
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser, OS & Downstream Tool
+      description: Include browser + version, OS, and any DAW/player/CLI used to inspect the exported file.
+      placeholder: "macOS 15.1 · Chrome 131 · DISCO / Pro Tools 2025.6 / ffprobe 7.1"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Ingestion Log / Console Output (Optional)
+      description: Paste any relevant lines from the Smart Document Auto-Fill console or browser DevTools.
+      render: text

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Report
+    url: https://github.com/zazieproductions/SyncTag-Pro/security/advisories/new
+    about: Privately disclose client-side XSS, binary corruption, or supply-chain vulnerabilities (see SECURITY.md).
+  - name: Sync Workflow & Binary Spec Documentation
+    url: https://github.com/zazieproductions/SyncTag-Pro/tree/main/docs
+    about: Review ID3v2.3 / RIFF WAV byte layouts, PDF/CSV schemas, deployment, and troubleshooting guides.
