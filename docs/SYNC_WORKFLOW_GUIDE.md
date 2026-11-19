@@ -36,7 +36,7 @@ SyncTag Pro stamps every required clearance artifact directly inside the audio f
 
 Choose either (or both) ingest tiles in **Panel 2: Smart Document Auto-Fill**:
 
-- **BMI / ASCAP PDF** — Drop a PRO work registration confirmation PDF to extract Work Title, Work #, ISWC, and IPI/CAE numbers.
+- **BMI / ASCAP PDF** — Enter the cue title first, then upload a PRO work registration confirmation PDF. Work #, ISWC, and IPI/CAE values are applied only when the detected registration title matches (case- and punctuation-insensitive); a mismatch leaves editor metadata untouched.
 - **ISRC Catalog CSV** — Drop your catalog spreadsheet (see [`samples/sample-isrc-catalog.csv`](samples/sample-isrc-catalog.csv)) and click **Match** next to the target cue to populate Title, Artist, ISRC, BPM, Key, and Sounds Like.
 
 ### Step 4 — Dial In Musical & Sonic Search Terms
@@ -59,14 +59,14 @@ Choose either (or both) ingest tiles in **Panel 2: Smart Document Auto-Fill**:
 
 ### 3.1 BMI / ASCAP PDF Regex Heuristics
 
-`parseProRegistrationText()` scans extracted text from pages `1..5` of uploaded PDFs using four deterministic rules:
+`parseProRegistrationText()` scans extracted text from pages `1..5` of uploaded PDFs. A non-empty editor cue title is required; matching normalizes Unicode, case, spaces, and punctuation but still requires the same title characters and order. Registration values are applied only after a title match, and the editor cue title itself is never replaced. Mismatches and missing titles leave existing metadata untouched.
 
 | Target Field | Pattern Summary | Example Input | Destination |
 |---|---|---|---|
-| **Work Title** | `(?:Title\|Work Name\|Song Title):\s*([A-Za-z0-9\s\-&]+?)` (up to `Work #`, `ISWC`, `BMI`, `ASCAP`, `Writers`, or EOL) | `Work Name: Subterranean Pulse` | `#metaTitle` |
-| **PRO Work ID** | `(?:Work\s*(?:#\|ID\|No\.?)\|BMI Work #)\s*[:]?\s*([0-9]{5,12})` | `BMI Work #: 68412093` | `#metaISWC` (as `#68412093`) |
-| **ISWC** | `(T-[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9])` | `T-931.294.102-1` | `#metaISWC` (joined with Work ID via ` / `) |
-| **IPI / CAE #** | `\b00[0-9]{7,9}\b\|\b[0-9]{9,11}\b` (deduplicated in order) | `01280391067`, `01372389230` | Sequential `.writer-row` IPI inputs |
+| **Registration title** | `Work Title`, `Work Name`, `Song Title`, `Song Name`, or `Title` labels | `Work Name: Subterranean Pulse` | Match check against `#metaTitle` only |
+| **PRO Work ID** | `(?:BMI\\s+)?Work\\s*(?:#\\|ID\\|No\\.?)\\s*:?\\s*([0-9]{5,12})` | `BMI Work #: 68412093` | `#metaISWC` (as `#68412093`) |
+| **ISWC** | `(T-[0-9]{3}\\.[0-9]{3}\\.[0-9]{3}-[0-9])` | `T-931.294.102-1` | `#metaISWC` (joined with Work ID via ` / `) |
+| **IPI / CAE #** | Explicit `IPI` / `CAE` values first; numeric fallback is deduplicated and excludes detected Work ID / ISWC numbers | `01280391067`, `01372389230` | Sequential `.writer-row` IPI inputs |
 
 > **Tip:** Scanned image-only PDFs contain no selectable text layer. Export digital PDFs directly from your BMI Online Services or ASCAP Member Access portal, or run OCR beforehand.
 

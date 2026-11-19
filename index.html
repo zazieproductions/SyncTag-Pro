@@ -155,7 +155,7 @@
                     <span class="text-[10px] text-slate-400 bg-emerald-500/10 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20">AI Ingest</span>
                 </div>
                 <p class="text-xs text-slate-400">
-                    Upload your <strong>BMI / ASCAP Work Registration PDF</strong>, cue sheet, or catalog <strong>ISRC spreadsheet (CSV)</strong> to instantly extract & match clearance fields.
+                    Upload a <strong>BMI / ASCAP Work Registration PDF</strong> after entering the cue title. Registration details apply only when the title matches (ignoring punctuation and case); other registrations are left untouched. Catalog <strong>CSV</strong> matching is also available.
                 </p>
 
                 <!-- Document Drop Zones in Tabs -->
@@ -165,7 +165,7 @@
                         <input type="file" id="pdfFileInput" accept=".pdf" class="hidden">
                         <i data-lucide="file-text" class="w-5 h-5 text-red-400 group-hover:scale-110 transition"></i>
                         <span class="font-medium text-slate-300">BMI / ASCAP PDF</span>
-                        <span class="text-[10px] text-slate-500">Auto-reads Work #, IPI, Splits</span>
+                        <span class="text-[10px] text-slate-500">Title-matched Work #, ISWC & IPI
                     </label>
 
                     <!-- CSV / Spreadsheet Drop -->
@@ -221,7 +221,7 @@
                     <div>
                         <h2 class="text-base font-bold text-white flex items-center gap-2">
                             <i data-lucide="file-badge" class="w-5 h-5 text-emerald-400"></i>
-                            Sync Metadata Specification (Industry Standard ID3v2.4 & Broadcast WAV bext)
+                            Sync Metadata Editor (ID3v2.3 & Broadcast WAV RIFF INFO)
                         </h2>
                         <p class="text-xs text-slate-400 mt-0.5">Every field required by Film/TV Music Supervisors, Networks & Ad Agencies</p>
                     </div>
@@ -235,6 +235,27 @@
                             Clear
                         </button>
                     </div>
+                </div>
+
+                <!-- Zazie Productions metadata workflow tools -->
+                <div class="mt-4 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] p-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <div>
+                            <p class="text-xs font-bold text-indigo-200">Zazie Productions · Cue Desk</p>
+                            <p class="text-[11px] text-slate-400">Apply studio rights, keep a private browser draft, or pass metadata to a collaborator.</p>
+                        </div>
+                        <span id="draftStatus" class="text-[10px] text-slate-500" aria-live="polite">Draft not saved</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="applyZazieProfile()" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-md bg-indigo-500/15 border border-indigo-400/30 text-indigo-200 hover:bg-indigo-500/25">Use Zazie rights</button>
+                        <button type="button" onclick="saveDraft()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Save draft</button>
+                        <button type="button" onclick="exportMetadataJson()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Export metadata JSON</button>
+                        <button type="button" onclick="document.getElementById('metadataJsonInput').click()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Import JSON</button>
+                        <button type="button" onclick="copyClearanceMemo()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Copy clearance memo</button>
+                        <input type="file" id="metadataJsonInput" accept=".json,application/json" class="hidden">
+                    </div>
+                    <p class="mt-2 text-[10px] text-slate-500">Private by design: drafts stay in this browser; JSON export is created locally. Audio is never included.</p>
+                    <p class="mt-1 text-[10px] text-slate-400">Delivery filename: <span id="filenamePreview" class="font-mono text-emerald-300">Artist - Track (Sync Ready).mp3</span></p>
                 </div>
 
                 <!-- Form Grid -->
@@ -469,13 +490,37 @@
                     <div class="mt-4">
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center justify-between">
                             <span>ID3 Comments / Broadcast Sync Clearance Memo (Embedded in File)</span>
-                            <span class="text-[10px] text-emerald-400 font-mono">Will be stamped into COMM & BWF bext chunks</span>
+                            <span class="text-[10px] text-emerald-400 font-mono">Stamped into ID3 COMM & RIFF INFO metadata</span>
                         </label>
                         <textarea id="metaComments" rows="3" class="w-full bg-studio-900 border border-slate-700 rounded-lg p-3 text-xs text-slate-300 font-mono leading-relaxed" placeholder="Pre-cleared contact and clearance instructions"></textarea>
                     </div>
                 </div>
 
             </div>
+
+            <!-- Local catalog and pitch collections -->
+            <section class="bg-studio-850 rounded-xl border border-slate-800 p-5 shadow-xl" aria-labelledby="cueLibraryHeading">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 id="cueLibraryHeading" class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                            <i data-lucide="library" class="w-4 h-4 text-emerald-400"></i> Cue Library & Pitch Collections
+                        </h2>
+                        <p class="text-[11px] text-slate-400 mt-1">Organize searchable cue metadata into pitch collections. Audio files stay out of this local library.</p>
+                    </div>
+                    <span id="cueLibraryStatus" class="text-[10px] text-slate-500" aria-live="polite">0 cues in this browser</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 mt-4">
+                    <input id="cueCollection" type="text" maxlength="120" placeholder="Collection / pitch name (e.g. Zazie Horror Trailer Reel)" class="min-w-0 bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                    <button type="button" onclick="saveCueToCatalog()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white">Save / update cue</button>
+                    <button type="button" onclick="exportCueCollectionCsv()" class="px-3 py-2 text-xs rounded-lg bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Export collection CSV</button>
+                </div>
+                <div class="mt-3">
+                    <label for="cueSearch" class="sr-only">Search cue library</label>
+                    <input id="cueSearch" type="search" placeholder="Search title, artist, collection, mood, genre, or placement..." class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                </div>
+                <div id="cueCatalogList" class="mt-3 flex flex-col gap-2 max-h-80 overflow-y-auto" aria-live="polite"></div>
+                <p class="mt-2 text-[10px] text-slate-500">Cue records are stored in local browser storage. Use a collection name to export just that pitch list; leave it blank to export all cues.</p>
+            </section>
 
         </section>
 
@@ -526,6 +571,11 @@
         let audioDurationSeconds = 0;
         let bpmTapTimes = [];
         let parsedSpreadsheetCatalog = [];
+        let cueCatalog = [];
+        let activeCueId = null;
+        const CUE_CATALOG_STORAGE_KEY = 'synctag-pro:cue-library:v1';
+        const DRAFT_STORAGE_KEY = 'synctag-pro:zazie-cue-draft:v1';
+        let draftSaveTimer = null;
 
         // Pre-saved Profiles (Vault Database)
         let syncProfiles = [
@@ -614,6 +664,7 @@
         // Initialization
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+            restoreDraft(true);
             initGenreAndMoodClouds();
             renderProfilePills();
             updateCommentsField();
@@ -624,6 +675,10 @@
             setupDocumentIngest();
             setupAudioEvents();
             setupFormListeners();
+            setupCueLibrary();
+            loadCueCatalog();
+            renderCueCatalog();
+            updateFilenamePreview();
         });
 
         // Initialize Genre & Mood Pill Clouds
@@ -669,6 +724,7 @@
             }
             updateCommentsField();
             calculateReadinessScore();
+            scheduleDraftSave();
         }
 
         function toggleMood(mood, element) {
@@ -681,6 +737,7 @@
             }
             updateCommentsField();
             calculateReadinessScore();
+            scheduleDraftSave();
         }
 
         // Setup Drag & Drop for Audio
@@ -736,6 +793,8 @@
                 const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
                 titleInput.value = cleanName;
             }
+            updateFilenamePreview();
+            scheduleDraftSave();
 
             // Read as ArrayBuffer for binary metadata insertion
             const reader = new FileReader();
@@ -840,6 +899,7 @@
 
         // Document Ingestion (PDF & CSV Parsers)
         function setupDocumentIngest() {
+            setupMetadataJsonImport();
             const pdfInput = document.getElementById('pdfFileInput');
             const csvInput = document.getElementById('csvFileInput');
 
@@ -877,52 +937,56 @@
             }
         }
 
-        // Rule-based heuristic extraction from BMI / ASCAP PDF registrations
+        // Compare titles conservatively: case and punctuation differences are okay, but words must match.
+        function normalizeRegistrationTitle(value) {
+            return String(value || '').normalize('NFKC').toLocaleLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+        }
+
+        // Rule-based extraction from BMI / ASCAP PDF registrations, gated on the cue title.
         function parseProRegistrationText(text, filename) {
-            let extracted = {
-                title: '',
-                workId: '',
-                iswc: '',
-                ipis: [],
-                writers: []
-            };
+            const targetTitle = document.getElementById('metaTitle').value.trim();
+            const titlePattern = /(?:Work\s+Title|Work\s+Name|Song\s+Title|Song\s+Name|Title)\s*[:#]\s*(.+?)(?=\s+(?:BMI\s+Work\s*#|Work\s*(?:#|ID|No\.?)|ISWC\b|Writers?\b|Composers?\b|Publisher\b|IPI\b|CAE\b)|$)/gi;
+            const candidates = [...text.matchAll(titlePattern)].map(match => ({
+                title: match[1].trim().replace(/[\s,;|]+$/, ''),
+                index: match.index
+            })).filter(item => item.title);
 
-            // Detect Work / Song Title
-            const titleMatch = text.match(/(?:Title|Work Name|Song Title):\s*([A-Za-z0-9\s\-&]+?)(?=(?:Work #|ISWC|BMI|ASCAP|Writers|$))/i);
-            if (titleMatch && titleMatch[1]) {
-                extracted.title = titleMatch[1].trim();
+            if (!targetTitle) {
+                logStatus(`[SKIPPED] Enter the cue title before matching BMI / PRO registration data from ${filename}.`);
+                showToast('Enter a track title first', 'BMI metadata will only be applied when the document title matches the title in the editor.', 'type');
+                return { matched: false, reason: 'missing-target', candidates };
+            }
+            const targetKey = normalizeRegistrationTitle(targetTitle);
+            const matchIndex = candidates.findIndex(item => normalizeRegistrationTitle(item.title) === targetKey);
+            if (!targetKey || matchIndex < 0) {
+                const detected = candidates.length ? candidates.map(item => `“${item.title}”`).slice(0, 3).join(', ') : 'no recognizable work title';
+                logStatus(`[NO MATCH] Editor title “${targetTitle}” does not match ${detected} in ${filename}; no metadata was changed.`);
+                showToast('Registration title did not match', `No fields changed. Editor: “${targetTitle}”; document: ${detected}.`, 'search-x');
+                return { matched: false, reason: 'title-mismatch', candidates };
             }
 
-            // Detect BMI Work # / ASCAP Work ID
-            const workMatch = text.match(/(?:Work\s*(?:#|ID|No\.?)|BMI Work #)\s*[:]?\s*([0-9]{5,12})/i);
-            if (workMatch && workMatch[1]) {
-                extracted.workId = workMatch[1].trim();
-            }
+            const candidate = candidates[matchIndex];
+            // If the PDF contains multiple registrations, keep extraction inside the matching title's section.
+            const sectionEnd = candidates[matchIndex + 1] ? candidates[matchIndex + 1].index : text.length;
+            const section = candidates.length > 1 ? text.slice(candidate.index, sectionEnd) : text;
+            const extracted = { title: candidate.title, workId: '', iswc: '', ipis: [], writers: [] };
+            const workMatch = section.match(/(?:BMI\s+)?Work\s*(?:#|ID|No\.?)\s*:?\s*([0-9]{5,12})/i);
+            if (workMatch) extracted.workId = workMatch[1].trim();
+            const iswcMatch = section.match(/\b(T-[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9])\b/i);
+            if (iswcMatch) extracted.iswc = iswcMatch[1].trim();
 
-            // Detect ISWC
-            const iswcMatch = text.match(/(T-[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9])/i);
-            if (iswcMatch && iswcMatch[1]) {
-                extracted.iswc = iswcMatch[1].trim();
-            }
+            const explicitIpis = [...section.matchAll(/\b(?:IPI\s*\/\s*CAE|IPI|CAE)(?:\s*(?:Number|No\.?)|\s*#)?\s*[:#]?\s*(\d{9,11})\b/gi)].map(item => item[1]);
+            const numericCandidates = section.match(/\b00[0-9]{7,9}\b|\b[0-9]{9,11}\b/g) || [];
+            const ipis = explicitIpis.length ? explicitIpis : numericCandidates.filter(value => value !== extracted.workId && (!extracted.iswc || !extracted.iswc.includes(value)));
+            extracted.ipis = [...new Set(ipis)];
 
-            // Detect IPI / CAE numbers (usually 9 to 11 digits)
-            const ipiMatches = text.match(/\b00[0-9]{7,9}\b|\b[0-9]{9,11}\b/g);
-            if (ipiMatches) {
-                extracted.ipis = [...new Set(ipiMatches)];
-            }
+            logStatus(`[MATCH] Registration title “${extracted.title}” matches editor title “${targetTitle}”.`);
+            logStatus(`Detected Work ID: #${extracted.workId || 'N/A'}${extracted.iswc ? ` | ISWC: ${extracted.iswc}` : ''}`);
+            if (extracted.ipis.length) logStatus(`Found ${extracted.ipis.length} IPI / CAE numbers: ${extracted.ipis.slice(0, 3).join(', ')}`);
 
-            // Log results to console & status
-            logStatus(`Detected Title: "${extracted.title || 'Auto-filled from Doc'}" | Work ID: #${extracted.workId || 'N/A'}`);
-            if (extracted.iswc) logStatus(`Detected ISWC: ${extracted.iswc}`);
-            if (extracted.ipis.length) logStatus(`Found ${extracted.ipis.length} IPI / CAE numbers in document: ${extracted.ipis.slice(0, 3).join(', ')}`);
-
-            // Apply to form
-            if (extracted.title) document.getElementById('metaTitle').value = extracted.title;
             if (extracted.workId || extracted.iswc) {
                 document.getElementById('metaISWC').value = [extracted.iswc, extracted.workId ? `#${extracted.workId}` : ''].filter(Boolean).join(' / ');
             }
-
-            // If IPIs found, populate first rows
             if (extracted.ipis.length > 0) {
                 const ipiInputs = document.querySelectorAll('.writer-row input[placeholder*="IPI"]');
                 extracted.ipis.forEach((ipi, idx) => {
@@ -932,7 +996,9 @@
 
             updateCommentsField();
             calculateReadinessScore();
-            showToast("Sync Metadata Ingested", `Matched BMI/PRO Work ID & IPI from PDF!`, "check-check");
+            scheduleDraftSave();
+            showToast('BMI metadata matched', `Loaded Work ID, ISWC and ${extracted.ipis.length} IPI value(s) for “${extracted.title}”.`, 'check-check');
+            return { matched: true, ...extracted };
         }
 
         // CSV Catalog Spreadsheet Parser
@@ -1000,13 +1066,18 @@
             });
         }
 
+        // Escape user/imported values before placing them in dynamic writer-row markup.
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+        }
+
         // Writer & Split Matrix dynamic rows
         function addWriterRow(data = null) {
             const container = document.getElementById('splitsContainer');
             const row = document.createElement('div');
             row.className = 'writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850';
             row.innerHTML = `
-                <input type="text" placeholder="Writer Full Legal Name (First Last)" value="${data ? data.name : ''}" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                <input type="text" placeholder="Writer Full Legal Name (First Last)" value="${escapeHtml(data ? data.name : '')}" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
                 <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
                     <option value="BMI" ${data && data.pro==='BMI'?'selected':''}>BMI</option>
                     <option value="ASCAP" ${data && data.pro==='ASCAP'?'selected':''}>ASCAP</option>
@@ -1014,9 +1085,9 @@
                     <option value="PRS" ${data && data.pro==='PRS'?'selected':''}>PRS</option>
                     <option value="SOCAN" ${data && data.pro==='SOCAN'?'selected':''}>SOCAN</option>
                 </select>
-                <input type="text" placeholder="IPI / CAE #" value="${data ? data.ipi : ''}" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                <input type="text" placeholder="IPI / CAE #" value="${escapeHtml(data ? data.ipi : '')}" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
                 <div class="col-span-2 flex items-center gap-1">
-                    <input type="number" placeholder="50" value="${data ? data.split : '50'}" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                    <input type="number" placeholder="50" value="${escapeHtml(data ? data.split : '50')}" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
                     <span class="text-xs text-slate-400">%</span>
                 </div>
                 <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
@@ -1073,6 +1144,8 @@
             showToast("Vault Profile Applied", `Loaded ${profile.name} writers & sync contact info.`, "shield-check");
             updateCommentsField();
             calculateReadinessScore();
+            updateFilenamePreview();
+            scheduleDraftSave();
         }
 
         function openProfileModal() {
@@ -1238,13 +1311,316 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
         }
 
         function setupFormListeners() {
-            const inputs = document.querySelectorAll('#metaTitle, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaRecordLabel, #metaWebsite, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
+            const inputs = document.querySelectorAll('#metaTitle, #metaVersion, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaRecordLabel, #metaWebsite, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
             inputs.forEach(input => {
                 input.oninput = () => {
                     updateCommentsField();
                     calculateReadinessScore();
+                    updateFilenamePreview();
+                    scheduleDraftSave();
                 };
+                input.onchange = input.oninput;
             });
+        }
+
+        function updateFilenamePreview() {
+            const artist = document.getElementById('metaArtist').value.trim() || 'Artist';
+            const title = document.getElementById('metaTitle').value.trim() || 'Track';
+            const extension = audioFileName.toLowerCase().endsWith('.wav') || audioFileType.includes('wav') ? 'wav' : 'mp3';
+            const filename = `${artist} - ${title} (Sync Ready).${extension}`.replace(/[\\/\\?%*:|"<>]/g, '_');
+            document.getElementById('filenamePreview').textContent = filename;
+        }
+
+        function getEditorSnapshot() {
+            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
+            const metadata = {};
+            fields.forEach(id => metadata[id] = document.getElementById(id).value);
+            metadata.activeProfileName = document.getElementById('activeProfileDisplay').textContent;
+            metadata.cueCollection = document.getElementById('cueCollection').value;
+            metadata.writers = Array.from(document.querySelectorAll('.writer-row'), row => {
+                const inputs = row.querySelectorAll('input, select');
+                return { name: inputs[0].value, pro: inputs[1].value, ipi: inputs[2].value, split: inputs[3].value };
+            });
+            metadata.genres = Array.from(selectedGenres);
+            metadata.moods = Array.from(selectedMoods);
+            return metadata;
+        }
+
+        function applyEditorSnapshot(snapshot) {
+            if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('Metadata JSON must contain an object.');
+            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
+            fields.forEach(id => {
+                if (typeof snapshot[id] === 'string') document.getElementById(id).value = snapshot[id].slice(0, 4000);
+            });
+            if (typeof snapshot.activeProfileName === 'string') document.getElementById('activeProfileDisplay').textContent = snapshot.activeProfileName.slice(0, 160);
+            if (typeof snapshot.cueCollection === 'string') document.getElementById('cueCollection').value = snapshot.cueCollection.slice(0, 120);
+            if (Array.isArray(snapshot.writers)) {
+                const container = document.getElementById('splitsContainer');
+                container.innerHTML = '';
+                snapshot.writers.slice(0, 30).forEach(writer => {
+                    if (writer && typeof writer === 'object') addWriterRow({
+                        name: String(writer.name || '').slice(0, 200),
+                        pro: String(writer.pro || 'BMI').slice(0, 40),
+                        ipi: String(writer.ipi || '').slice(0, 30),
+                        split: String(writer.split ?? '50').slice(0, 8)
+                    });
+                });
+                if (!snapshot.writers.length) addWriterRow();
+            }
+            if (Array.isArray(snapshot.genres)) selectedGenres = new Set(snapshot.genres.filter(v => PRESET_GENRES.includes(v)));
+            if (Array.isArray(snapshot.moods)) selectedMoods = new Set(snapshot.moods.filter(v => PRESET_MOODS.includes(v)));
+            updateCommentsField();
+            calculateReadinessScore();
+            updateFilenamePreview();
+            initGenreAndMoodClouds();
+        }
+
+        function scheduleDraftSave() {
+            clearTimeout(draftSaveTimer);
+            draftSaveTimer = setTimeout(() => saveDraft(true), 500);
+        }
+
+        function saveDraft(silent = false) {
+            try {
+                localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ version: 1, savedAt: new Date().toISOString(), metadata: getEditorSnapshot() }));
+                const status = document.getElementById('draftStatus');
+                status.textContent = `Saved locally · ${new Date().toLocaleTimeString()}`;
+                status.className = 'text-[10px] text-emerald-400';
+                if (!silent) showToast('Draft saved', 'Your metadata draft is stored in this browser only.', 'save');
+                return true;
+            } catch (err) {
+                document.getElementById('draftStatus').textContent = 'Local storage unavailable';
+                if (!silent) showToast('Draft not saved', 'Browser storage is unavailable or full.', 'alert-circle');
+                return false;
+            }
+        }
+
+        function restoreDraft(silent = false) {
+            try {
+                const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+                if (!raw) return false;
+                const saved = JSON.parse(raw);
+                if (saved.version !== 1 || !saved.metadata) return false;
+                applyEditorSnapshot(saved.metadata);
+                document.getElementById('draftStatus').textContent = `Restored locally · ${new Date(saved.savedAt).toLocaleString()}`;
+                document.getElementById('draftStatus').className = 'text-[10px] text-emerald-400';
+                if (!silent) showToast('Draft restored', 'Your latest local metadata draft is back in the editor.', 'rotate-ccw');
+                return true;
+            } catch (err) {
+                logStatus(`[WARN] Could not restore local metadata draft: ${err.message}`);
+                return false;
+            }
+        }
+
+        function downloadJsonFile(filename, content) {
+            const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportMetadataJson() {
+            const snapshot = getEditorSnapshot();
+            const safeBase = (snapshot.metaTitle || 'sync-metadata').trim().replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') || 'sync-metadata';
+            downloadJsonFile(`${safeBase}-metadata.json`, JSON.stringify({ app: 'SyncTag Pro', version: 1, exportedAt: new Date().toISOString(), metadata: snapshot }, null, 2));
+            showToast('Metadata exported', 'A JSON sidecar was downloaded; no audio is included.', 'file-json');
+        }
+
+        function setupMetadataJsonImport() {
+            const input = document.getElementById('metadataJsonInput');
+            input.addEventListener('change', async event => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) return;
+                try {
+                    if (file.size > 2 * 1024 * 1024) throw new Error('Metadata JSON is larger than the 2 MB import limit.');
+                    const data = JSON.parse(await file.text());
+                    applyEditorSnapshot(data.metadata || data);
+                    saveDraft(true);
+                    showToast('Metadata imported', 'Imported fields were loaded. Review rights and splits before delivery.', 'file-check-2');
+                    logStatus(`[SUCCESS] Imported metadata JSON: ${file.name}`);
+                } catch (err) {
+                    showToast('Import failed', `Could not read metadata JSON: ${err.message}`, 'alert-circle');
+                } finally {
+                    input.value = '';
+                }
+            });
+        }
+
+        async function copyClearanceMemo() {
+            try {
+                await navigator.clipboard.writeText(document.getElementById('metaComments').value);
+                showToast('Memo copied', 'Clearance memo copied to your clipboard.', 'copy');
+            } catch (err) {
+                showToast('Clipboard unavailable', 'Select and copy the memo field manually.', 'alert-circle');
+            }
+        }
+
+        function applyZazieProfile() {
+            const profile = syncProfiles.find(item => item.id === 'profile_zazie');
+            if (profile) {
+                applyProfile(profile);
+                updateFilenamePreview();
+                scheduleDraftSave();
+            }
+        }
+
+        function setupCueLibrary() {
+            document.getElementById('cueSearch').addEventListener('input', renderCueCatalog);
+            document.getElementById('cueCollection').addEventListener('input', scheduleDraftSave);
+        }
+
+        function loadCueCatalog() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(CUE_CATALOG_STORAGE_KEY) || '[]');
+                cueCatalog = Array.isArray(saved) ? saved.filter(cue => cue && typeof cue.id === 'string' && cue.metadata && typeof cue.metadata === 'object').slice(0, 500) : [];
+            } catch (err) {
+                cueCatalog = [];
+                logStatus(`[WARN] Could not load local cue library: ${err.message}`);
+            }
+        }
+
+        function persistCueCatalog() {
+            try {
+                localStorage.setItem(CUE_CATALOG_STORAGE_KEY, JSON.stringify(cueCatalog));
+                return true;
+            } catch (err) {
+                showToast('Library not saved', 'Browser storage is unavailable or full. Export a collection CSV as a backup.', 'alert-circle');
+                return false;
+            }
+        }
+
+        function renderCueCatalog() {
+            const list = document.getElementById('cueCatalogList');
+            const query = document.getElementById('cueSearch').value.trim().toLowerCase();
+            list.innerHTML = '';
+            const filtered = cueCatalog.filter(cue => {
+                const meta = cue.metadata || {};
+                const searchable = [meta.metaTitle, meta.metaArtist, cue.collection, meta.metaSoundsLike, meta.metaPlacementNotes, ...(meta.genres || []), ...(meta.moods || [])].join(' ').toLowerCase();
+                return searchable.includes(query);
+            }).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+            document.getElementById('cueLibraryStatus').textContent = `${cueCatalog.length} cue${cueCatalog.length === 1 ? '' : 's'} in this browser`;
+
+            if (!filtered.length) {
+                const empty = document.createElement('p');
+                empty.className = 'text-xs text-slate-500 text-center py-5';
+                empty.textContent = cueCatalog.length ? 'No cues match this search.' : 'Your cue library is empty. Add a cue above to start a pitch collection.';
+                list.appendChild(empty);
+                return;
+            }
+
+            filtered.forEach(cue => {
+                const meta = cue.metadata;
+                const card = document.createElement('article');
+                card.className = 'rounded-lg border border-slate-800 bg-studio-900/70 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+                const copy = document.createElement('div');
+                copy.className = 'min-w-0';
+                const title = document.createElement('h3');
+                title.className = 'text-xs font-semibold text-slate-100 truncate';
+                title.textContent = meta.metaTitle || 'Untitled cue';
+                const details = document.createElement('p');
+                details.className = 'text-[10px] text-slate-400 mt-1';
+                const tags = [...(meta.genres || []), ...(meta.moods || [])].slice(0, 4).join(' · ');
+                details.textContent = [meta.metaArtist || 'Unknown artist', cue.collection || 'Unassigned collection', tags, meta.metaPlacementNotes].filter(Boolean).join('  •  ');
+                copy.appendChild(title);
+                copy.appendChild(details);
+                const actions = document.createElement('div');
+                actions.className = 'flex shrink-0 gap-2';
+                const loadButton = document.createElement('button');
+                loadButton.type = 'button';
+                loadButton.className = 'px-2.5 py-1.5 text-[10px] font-semibold rounded bg-indigo-600 text-white hover:bg-indigo-500';
+                loadButton.textContent = 'Open cue';
+                loadButton.onclick = () => loadCatalogCue(cue.id);
+                const deleteButton = document.createElement('button');
+                deleteButton.type = 'button';
+                deleteButton.className = 'px-2.5 py-1.5 text-[10px] rounded bg-slate-800 text-slate-400 hover:text-red-300';
+                deleteButton.textContent = 'Remove';
+                deleteButton.setAttribute('aria-label', `Remove ${meta.metaTitle || 'untitled cue'} from library`);
+                deleteButton.onclick = () => deleteCatalogCue(cue.id);
+                actions.appendChild(loadButton);
+                actions.appendChild(deleteButton);
+                card.appendChild(copy);
+                card.appendChild(actions);
+                list.appendChild(card);
+            });
+        }
+
+        function saveCueToCatalog() {
+            const metadata = getEditorSnapshot();
+            if (!metadata.metaTitle.trim() || !metadata.metaArtist.trim()) {
+                showToast('Title and artist needed', 'Add a cue title and artist / project before saving to the library.', 'alert-circle');
+                return false;
+            }
+            const collection = document.getElementById('cueCollection').value.trim().slice(0, 120);
+            let existing = cueCatalog.find(cue => cue.id === activeCueId);
+            if (!existing) {
+                existing = cueCatalog.find(cue => String(cue.metadata.metaTitle || '').trim().toLowerCase() === metadata.metaTitle.trim().toLowerCase() && String(cue.metadata.metaArtist || '').trim().toLowerCase() === metadata.metaArtist.trim().toLowerCase() && String(cue.collection || '').toLowerCase() === collection.toLowerCase());
+            }
+            const record = {
+                id: existing ? existing.id : `cue_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                collection,
+                updatedAt: new Date().toISOString(),
+                metadata
+            };
+            if (existing) cueCatalog = cueCatalog.map(cue => cue.id === existing.id ? record : cue);
+            else cueCatalog.unshift(record);
+            if (cueCatalog.length > 500) cueCatalog = cueCatalog.slice(0, 500);
+            activeCueId = record.id;
+            if (!persistCueCatalog()) return false;
+            renderCueCatalog();
+            document.getElementById('cueLibraryStatus').textContent = `Saved · ${cueCatalog.length} cue${cueCatalog.length === 1 ? '' : 's'} in this browser`;
+            showToast(existing ? 'Cue updated' : 'Cue added to library', `${metadata.metaTitle} saved${collection ? ` to ${collection}` : ''}. Audio is not stored.`, 'library');
+            return true;
+        }
+
+        function loadCatalogCue(id) {
+            const cue = cueCatalog.find(item => item.id === id);
+            if (!cue) return false;
+            activeCueId = cue.id;
+            applyEditorSnapshot(cue.metadata);
+            document.getElementById('cueCollection').value = cue.collection || '';
+            showToast('Cue opened', `${cue.metadata.metaTitle || 'Untitled cue'} is ready to edit.`, 'music-2');
+            return true;
+        }
+
+        function deleteCatalogCue(id) {
+            cueCatalog = cueCatalog.filter(cue => cue.id !== id);
+            if (activeCueId === id) activeCueId = null;
+            persistCueCatalog();
+            renderCueCatalog();
+        }
+
+        function csvCell(value) {
+            return `"${String(value ?? '').replace(/"/g, '""')}"`;
+        }
+
+        function exportCueCollectionCsv() {
+            const collection = document.getElementById('cueCollection').value.trim();
+            const rows = cueCatalog.filter(cue => !collection || String(cue.collection || '').toLowerCase() === collection.toLowerCase());
+            if (!rows.length) {
+                showToast('Nothing to export', collection ? `No cues are saved in “${collection}”.` : 'Add cues to the library first.', 'alert-circle');
+                return false;
+            }
+            const headers = ['Title', 'Artist', 'Collection', 'Version', 'ISRC', 'ISWC / Work ID', 'BPM', 'Key', 'Clearance', 'Master Owner', 'Contact Email', 'Genres', 'Moods', 'Placement Notes', 'Writers / Splits'];
+            const lines = [headers, ...rows.map(cue => {
+                const meta = cue.metadata;
+                const writers = (meta.writers || []).map(writer => `${writer.name} (${writer.pro}, ${writer.split}%) IPI ${writer.ipi}`).join(' | ');
+                return [meta.metaTitle, meta.metaArtist, cue.collection, meta.metaVersion, meta.metaISRC, meta.metaISWC, meta.metaBPM, meta.metaKey, meta.metaClearance, meta.metaMasterOwner, meta.metaContactEmail, (meta.genres || []).join('; '), (meta.moods || []).join('; '), meta.metaPlacementNotes, writers];
+            })].map(row => row.map(csvCell).join(',')).join('\r\n');
+            const url = URL.createObjectURL(new Blob(['\uFEFF', lines], { type: 'text/csv;charset=utf-8' }));
+            const link = document.createElement('a');
+            const base = (collection || 'all-cues').replace(/[^a-z0-9-_]+/gi, '-').replace(/^-|-$/g, '') || 'all-cues';
+            link.href = url;
+            link.download = `${base}-pitch-collection.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Collection exported', `${rows.length} cue${rows.length === 1 ? '' : 's'} exported as CSV metadata.`, 'download');
+            return true;
         }
 
         // Demo sample filler
@@ -1261,6 +1637,8 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
             document.getElementById('metaPlacementNotes').value = "Sci-fi blockbuster climax, Epic video game trailer";
             updateCommentsField();
             calculateReadinessScore();
+            updateFilenamePreview();
+            scheduleDraftSave();
             showToast("Sample Data Loaded", "Pre-filled industry standard sync licensing fields.", "wand-2");
         }
 
@@ -1272,6 +1650,8 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
             document.getElementById('metaSoundsLike').value = "";
             updateCommentsField();
             calculateReadinessScore();
+            updateFilenamePreview();
+            scheduleDraftSave();
         }
 
         // Log to Ingestion Terminal Box
@@ -1301,7 +1681,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
 
         // ==========================================
         // REAL BINARY METADATA EMBEDDING ENGINE
-        // Supports ID3v2.3 / ID3v2.4 (MP3) & RIFF / BWF (WAV)
+        // Writes ID3v2.3 (MP3) & RIFF LIST/INFO (WAV)
         // ==========================================
 
         async function triggerDownload() {

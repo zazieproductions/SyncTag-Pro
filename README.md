@@ -68,7 +68,7 @@ Built for **Zazie Productions LLC** and working film, television, trailer, game,
 | 🟣 | **Delivery Footprint** | Single self-contained `index.html` (~88 KB) · zero build step · zero server backend |
 | 🟢 | **MP3 Binary Engine** | Native `Uint8Array` **ID3v2.3** muxer · strips stale ID3 headers · injects up to **13 UTF-8 frames** (`TIT2`..`TPUB`, `COMM`, `3× TXXX`) · bit-exact MPEG passthrough |
 | 🔵 | **WAV Binary Engine** | Native `Uint8Array` **RIFF `LIST`/`INFO`** muxer · appends **7 word-aligned subchunks** (`INAM`, `IART`, `IPRD`, `IGNR`, `ICRD`, `ICOP`, `ICMT`) · patches LE32 header size · lossless PCM |
-| 🔴 | **PRO PDF Auto-Fill** | Client-side **PDF.js v3.11.174** worker scans pages 1–5 of BMI/ASCAP work registrations · extracts Title, Work #, `ISWC`, and deduplicated 9–11 digit `IPI/CAE` IDs |
+| 🔴 | **PRO PDF Auto-Fill** | Client-side **PDF.js v3.11.174** worker scans pages 1–5 · applies Work #, `ISWC`, and `IPI/CAE` values only after punctuation-insensitive title matching against the cue title; mismatches leave metadata untouched |
 | 🔵 | **Catalog CSV Matcher** | Client-side **PapaParse v5.4.1** spreadsheet ingestion · fuzzy column-alias matching for Title, `ISRC`, BPM, Key, Artist & Sounds Like (`RIYL`) |
 | 🟣 | **Rights Vault** | **4 pre-loaded entity profiles** (including *Zazie Productions (BMI)*) + unlimited custom session profiles with 1-click Writer/PRO/IPI/Label/Website recall |
 | 🟠 | **Readiness Validator** | Real-time **100-point weighted scorer** + dual-convention split check (`100%` combined or `200%` BMI writer+publisher share) across 3 color-coded status tiers |
@@ -153,7 +153,7 @@ SyncTag Pro runs entirely inside a single HTML document (`index.html`, 1,582 lin
 |:---:|---|---|---|
 | ⚪ | **1. App Shell & Feedback** | `DOMContentLoaded`, `setupFormListeners()`, `logStatus()`, `showToast()` | Hydrates Lucide icons, wires reactive `oninput` handlers, streams timestamped `[HH:MM:SS]` ingestion logs, and drives toast alerts. |
 | 🟣 | **2. Audio Source Deck** | `setupDropzone()`, `processAudioFile()`, `loadAudioIntoPlayer()`, `drawDummyWaveform()` | Handles drag/drop + picker uploads, reads raw `ArrayBuffer`, manages HTML5 `<audio>` transport, and renders the `<canvas>` playhead bar graph. |
-| 🔴 | **3. PRO PDF Parser** | `handlePdfUpload()`, `parseProRegistrationText()` | Offloads PDF decoding to the PDF.js v3.11.174 Web Worker (first 5 pages) and extracts Work Title, Work #, `ISWC`, and unique `IPI/CAE` IDs via regex heuristics. |
+| 🔴 | **3. PRO PDF Parser** | `handlePdfUpload()`, `parseProRegistrationText()` | Offloads PDF decoding to PDF.js v3.11.174 (first 5 pages), compares the detected registration title with the editor title, and only applies Work #, `ISWC`, and `IPI/CAE` values on a match. |
 | 🔵 | **4. CSV Catalog Matcher** | `handleCsvUpload()`, `displayCatalogMatches()` | Parses `.csv`/`.tsv`/`.txt` catalogs with PapaParse v5.4.1 (`header: true`) and renders up to 10 interactive one-click cue-matching cards. |
 | 🟣 | **5. Publisher / Writer Vault** | `renderProfilePills()`, `applyProfile()`, `openProfileModal()`, `saveCurrentAsProfile()` | Manages preset and custom session catalog entities across both the sidebar pill bar and modal selector, syncing writers, PROs, IPIs, splits, label, website, and contacts. |
 | 🟠 | **6. Live Memo & QA Engine** | `updateCommentsField()`, `calculateReadinessScore()`, `addWriterRow()`, `removeWriterRow()`, `tapTempo()` | Compiles the structured supervisor Clearance Memo on every keystroke, computes the 100-pt readiness badge, manages dynamic split rows, and calculates 5-tap BPM. |
@@ -221,7 +221,7 @@ Uncompressed PCM audio (`fmt ` and `data` chunks) remains 100% untouched. A 16-b
 | **1. Audio Source** | Play / Pause | `#playPauseBtn` | Button | Toggles HTML5 `<audio>` playback and swaps `play` / `pause` icon. |
 | **1. Audio Source** | Stop | `#stopBtn` | Button | Pauses playback, resets `currentTime = 0`, and restores `play` icon. |
 | **1. Audio Source** | Waveform & Timecode | `#waveformCanvas`, `#currentTrackMeta` | Canvas + Readout | Renders responsive harmonic bar graph with indigo (`#6366f1`) played progress and `m:ss / m:ss` counter. |
-| **2. Smart Auto-Fill** | BMI / ASCAP PDF | `#pdfFileInput` / `handlePdfUpload()` | `.pdf` (pages 1–5) | Extracts Work Title → `#metaTitle`, `ISWC` + `#WorkID` → `#metaISWC`, and unique 9–11 digit `IPI`s → `.writer-row` IPI fields. |
+| **2. Smart Auto-Fill** | BMI / ASCAP PDF | `#pdfFileInput` / `handlePdfUpload()` | `.pdf` (pages 1–5; editor title required) | Punctuation/case-insensitive title match gates Work ID + `ISWC` → `#metaISWC` and `IPI`s → `.writer-row`; never overwrites the cue title or applies data on mismatch. |
 | **2. Smart Auto-Fill** | ISRC Catalog CSV | `#csvFileInput` / `handleCsvUpload()` | `.csv, .tsv, .txt` | Parses header-keyed rows and surfaces up to 10 one-click **Match** cards in `#catalogMatches`. |
 | **2. Smart Auto-Fill** | Ingestion Console | `#parseStatusBox` | Monospace Log | Auto-scrolling activity terminal logging loads, regex extractions, profile switches, exports, and errors. |
 | **3. Rights Vault** | Save Active | `saveCurrentAsProfile()` | Prompt → Button | Snapshots active Artist, Master Owner, Label, Website, Email, Phone, Clearance, and all Split rows into a new Vault pill. |
@@ -244,6 +244,12 @@ Uncompressed PCM audio (`fmt ` and `data` chunks) remains 100% untouched. A 16-b
 |---|---|---|---|---|---|
 | **Toolbar** | Load Sample Sync Track | `fillSampleSyncData()` | Button | — | Populates demo trailer cue (*Quantum Horizon*) + recalculates memo/score |
 | **Toolbar** | Clear | `resetMetadataForm()` | Button | — | Clears Title, ISRC, ISWC, BPM & Sounds Like (retains Vault contact/splits) |
+| **Zazie Cue Desk** | Use Zazie rights | `applyZazieProfile()` | Button | Zazie Productions (BMI) | Applies Zazie LLC contact, website, clearance tier, and writer / publisher rows |
+| **Zazie Cue Desk** | Save / restore draft | `saveDraft()` / `restoreDraft()` | Local browser storage | Latest editor snapshot | Autosaves metadata, writer splits, and selected tags locally; audio is never stored |
+| **Zazie Cue Desk** | JSON sidecar | `exportMetadataJson()` / `setupMetadataJsonImport()` | Download / `.json` upload (2 MB max) | — | Transfers metadata and splits without audio; imported fields should be checked before delivery |
+| **Zazie Cue Desk** | Copy clearance memo | `copyClearanceMemo()` | Clipboard button | Generated memo | Copies the live supervisor memo; delivery filename preview tracks Artist, Title, and WAV / MP3 extension |
+| **Cue Library** | Searchable catalog & pitch collections | `saveCueToCatalog()` / `loadCatalogCue()` | Local browser storage | Metadata only, up to 500 cues | Search titles, artists, collections, tags, and placements; reopen/update/delete cues without storing audio |
+| **Cue Library** | Export pitch collection | `exportCueCollectionCsv()` | CSV download | Collection name field (blank = all) | Exports cue identity, rights, contact, tags, and writer/split details for spreadsheet handoff |
 | **Core** | Track Title `*` | `#metaTitle` | `text` | `""` | **+15 pts** · MP3 `TIT2`, WAV `INAM`, filename |
 | **Core** | Version / Stem Type | `#metaVersion` | `select` (7) | `Instrumental` | Delivery stem classification selector |
 | **Core** | Artist / Project `*` | `#metaArtist` | `text` | `""` | **+15 pts** · MP3 `TPE1`, WAV `IART`, Vault, filename |

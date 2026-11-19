@@ -112,6 +112,13 @@ function createAppHarness() {
     return row;
   }
 
+  const localStorageData = new Map();
+  const fakeLocalStorage = {
+    getItem: (key) => localStorageData.has(key) ? localStorageData.get(key) : null,
+    setItem: (key, value) => localStorageData.set(key, String(value)),
+    removeItem: (key) => localStorageData.delete(key),
+  };
+
   const defaults = {
     metaTitle: '',
     metaVersion: 'Instrumental',
@@ -202,6 +209,8 @@ function createAppHarness() {
     console,
     parseFloat,
     setTimeout: () => 0,
+    clearTimeout() {},
+    localStorage: fakeLocalStorage,
     prompt: () => 'Custom Co-Pub Vault',
     lucide: { createIcons() {} },
     pdfjsLib: { GlobalWorkerOptions: {} },
@@ -220,7 +229,17 @@ globalThis.__state = {
     uploadedAudioArrayBuffer = buf;
     if (name) audioFileName = name;
     if (type) audioFileType = type;
-  }
+  },
+  getEditorSnapshot,
+  applyEditorSnapshot,
+  saveDraft,
+  restoreDraft,
+  applyZazieProfile,
+  get cueCatalog() { return cueCatalog; },
+  saveCueToCatalog,
+  loadCatalogCue,
+  deleteCatalogCue,
+  exportCueCollectionCsv
 };`;
 
   vm.runInContext(instrumented, context, { filename: 'index.html' });
@@ -514,7 +533,7 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
     assert.equal(zazie.writers[0].ipi, '01280391067');
     assert.equal(zazie.writers[1].ipi, '01372389230');
 
-    ctx.applyProfile(zazie);
+    ctx.applyZazieProfile();
     assert.equal(document.getElementById('metaRecordLabel').value, 'Zazie Productions LLC');
     assert.equal(document.getElementById('metaWebsite').value, 'https://horror.zazieproductions.com');
     assert.equal(writerRows.length, 2);
@@ -524,6 +543,58 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
     assert.match(memo, /WEBSITE \/ PORTFOLIO: https:\/\/horror\.zazieproductions\.com/);
     assert.match(memo, /IPI #01280391067/);
     assert.match(memo, /IPI #01372389230/);
+  });
+
+  it('saves a private local draft and imports metadata JSON snapshots without audio', () => {
+    const { ctx, document, writerRows } = createAppHarness();
+    document.getElementById('metaTitle').value = 'Zazie Cue';
+    document.getElementById('metaArtist').value = 'Zazie Productions';
+    assert.equal(ctx.saveDraft(true), true);
+
+    const snapshot = ctx.__state.getEditorSnapshot();
+    assert.equal(snapshot.metaTitle, 'Zazie Cue');
+    assert.equal(snapshot.metaArtist, 'Zazie Productions');
+    assert.equal(Object.hasOwn(snapshot, 'audio'), false);
+    document.getElementById('metaTitle').value = 'Unsaved change';
+    assert.equal(ctx.restoreDraft(true), true);
+    assert.equal(document.getElementById('metaTitle').value, 'Zazie Cue');
+
+    ctx.applyEditorSnapshot({
+      metaTitle: 'Imported Cue',
+      metaArtist: 'Zazie Productions',
+      writers: [{ name: '<img src=x onerror=alert(1)>', pro: 'BMI', ipi: '01234567890', split: 100 }],
+      genres: ['Cinematic Tension', 'not a preset'],
+      moods: ['Suspenseful / Mysterious'],
+    });
+    assert.equal(document.getElementById('metaTitle').value, 'Imported Cue');
+    assert.equal(writerRows.length, 1);
+    assert.equal(writerRows[0].innerHTML.includes('<img'), false);
+    assert.equal(writerRows[0].innerHTML.includes('&lt;img'), true);
+    assert.deepEqual(Array.from(ctx.__state.selectedGenres), ['Cinematic Tension']);
+    assert.deepEqual(Array.from(ctx.__state.selectedMoods), ['Suspenseful / Mysterious']);
+  });
+
+  it('stores searchable cue-library entries, updates the active cue, and removes records', () => {
+    const { ctx, document } = createAppHarness();
+    document.getElementById('metaTitle').value = 'Static Signal';
+    document.getElementById('metaArtist').value = 'Zazie Productions';
+    document.getElementById('cueCollection').value = 'Horror Trailer Reel';
+
+    assert.equal(ctx.saveCueToCatalog(), true);
+    assert.equal(ctx.__state.cueCatalog.length, 1);
+    assert.equal(ctx.__state.cueCatalog[0].collection, 'Horror Trailer Reel');
+    const id = ctx.__state.cueCatalog[0].id;
+
+    document.getElementById('metaTitle').value = 'Updated Static Signal';
+    assert.equal(ctx.saveCueToCatalog(), true);
+    assert.equal(ctx.__state.cueCatalog.length, 1);
+    document.getElementById('metaTitle').value = 'Unsaved title';
+    assert.equal(ctx.loadCatalogCue(id), true);
+    assert.equal(document.getElementById('metaTitle').value, 'Updated Static Signal');
+    assert.equal(document.getElementById('cueCollection').value, 'Horror Trailer Reel');
+
+    ctx.deleteCatalogCue(id);
+    assert.equal(ctx.__state.cueCatalog.length, 0);
   });
 
   it('evaluates 100-pt Sync Readiness tiers for both 100% and 200% split conventions', () => {
@@ -562,12 +633,33 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
       'BMI Work Registration Summary  Work Name: Subterranean Pulse BMI Work #: 68412093 ' +
       'ISWC: T-931.294.102-1 Writers: ZAZIE PRODUCTIONS IPI 01280391067 ' +
       'Publisher: ZAZIE PRODUCTIONS PUBLISHING IPI 01372389230 (dup 01280391067)';
+    document.getElementById('metaTitle').value = 'subterranean-pulse!';
 
-    ctx.parseProRegistrationText(samplePdfText, 'bmi_work.pdf');
-    assert.equal(document.getElementById('metaTitle').value, 'Subterranean Pulse');
+    const result = ctx.parseProRegistrationText(samplePdfText, 'bmi_work.pdf');
+    assert.equal(result.matched, true);
+    assert.equal(document.getElementById('metaTitle').value, 'subterranean-pulse!');
     assert.equal(document.getElementById('metaISWC').value, 'T-931.294.102-1 / #68412093');
     assert.equal(writerRows[0].inputs[2].value, '01280391067');
     assert.equal(writerRows[1].inputs[2].value, '01372389230');
+  });
+
+  it('leaves metadata unchanged when an uploaded registration title does not match', () => {
+    const { ctx, document, writerRows } = createAppHarness();
+    document.getElementById('metaTitle').value = 'Different Cue';
+    document.getElementById('metaISWC').value = 'Existing work reference';
+    const result = ctx.parseProRegistrationText(
+      'BMI Work Name: Subterranean Pulse BMI Work #: 68412093 ISWC: T-931.294.102-1 IPI 01280391067',
+      'registration.pdf',
+    );
+    assert.equal(result.matched, false);
+    assert.equal(result.reason, 'title-mismatch');
+    assert.equal(document.getElementById('metaTitle').value, 'Different Cue');
+    assert.equal(document.getElementById('metaISWC').value, 'Existing work reference');
+    assert.equal(writerRows[0].inputs[2].value, '00849204918');
+
+    document.getElementById('metaTitle').value = '';
+    const missingTitle = ctx.parseProRegistrationText('Work Name: Subterranean Pulse', 'registration.pdf');
+    assert.equal(missingTitle.reason, 'missing-target');
   });
 
   it('computes BPM accurately over rolling 5-tap window and rejects out-of-range intervals', () => {
