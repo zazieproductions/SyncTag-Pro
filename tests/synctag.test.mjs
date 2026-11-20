@@ -570,7 +570,7 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
     assert.equal(writerRows.length, 1);
     assert.equal(writerRows[0].innerHTML.includes('<img'), false);
     assert.equal(writerRows[0].innerHTML.includes('&lt;img'), true);
-    assert.deepEqual(Array.from(ctx.__state.selectedGenres), ['Cinematic Tension']);
+    assert.deepEqual(Array.from(ctx.__state.selectedGenres), ['Cinematic Tension', 'not a preset']);
     assert.deepEqual(Array.from(ctx.__state.selectedMoods), ['Suspenseful / Mysterious']);
   });
 
@@ -803,4 +803,21 @@ it('distinguishes master and publishing control without asserting a license', ()
   assert.match(memo, /^CLEARANCE: Not verified/);
   assert.match(memo, /PUBLISHING CONTROL: Composition administrator \(50%, US\)/);
   assert.doesNotMatch(memo, /worldwide|pre-cleared/i);
+});
+
+it('fills the editor from exported MP3 and WAV metadata, including rights and discovery fields', async () => {
+  for (const format of ['mp3', 'wav']) {
+    const { ctx, document } = createAppHarness();
+    const snapshot = { metaISWC: 'Work-123', metaPlacementNotes: 'Short edit available',
+      metaContactPhone: '+1 555 0100', genres: ['Chamber jazz'], moods: ['Reflective'],
+      writers: [{ name: 'Composer', pro: 'ASCAP', ipi: '123456789', split: '100' }] };
+    const meta = { title: 'Recorded title', comment: 'Original notes', editor: JSON.stringify(snapshot) };
+    const blob = format === 'mp3' ? ctx.embedMp3ID3Metadata(new ArrayBuffer(4), meta) : ctx.embedWavMetadata(buildMinimalWav().buffer, meta);
+    ctx.applyAudioTags(ctx.readEmbeddedTags(await blob.arrayBuffer()));
+    const result = ctx.getEditorSnapshot();
+    for (const key of ['metaISWC', 'metaPlacementNotes', 'metaContactPhone']) assert.equal(result[key], snapshot[key]);
+    assert.equal(result.genres[0], 'Chamber jazz');
+    assert.equal(result.metaTitle, 'Recorded title');
+    assert.equal(document.getElementById('metaComments').value, 'Original notes');
+  }
 });

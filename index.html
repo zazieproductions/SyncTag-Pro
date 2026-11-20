@@ -633,15 +633,15 @@
         const canvasCtx = waveformCanvas.getContext('2d');
 
         // Document Ingestion State
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        if (globalThis.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         // Initialization
         window.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            restoreDraft(true);
+            globalThis.lucide?.createIcons();
+            const restored = restoreDraft(true);
             initGenreAndMoodClouds();
             renderProfilePills();
-            updateCommentsField();
+            if (!restored) updateCommentsField();
             calculateReadinessScore();
 
             // Set up event listeners
@@ -659,7 +659,7 @@
         function initGenreAndMoodClouds() {
             const genreBox = document.getElementById('genreTagCloud');
             genreBox.innerHTML = '';
-            PRESET_GENRES.forEach(g => {
+            new Set([...PRESET_GENRES, ...selectedGenres]).forEach(g => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = `tag-pill text-xs px-2.5 py-1 rounded-md border font-medium cursor-pointer ${
@@ -674,7 +674,7 @@
 
             const moodBox = document.getElementById('moodTagCloud');
             moodBox.innerHTML = '';
-            PRESET_MOODS.forEach(m => {
+            new Set([...PRESET_MOODS, ...selectedMoods]).forEach(m => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = `tag-pill text-xs px-2.5 py-1 rounded-md border font-medium cursor-pointer ${
@@ -750,7 +750,8 @@
         // Process incoming Audio File
         // Read text only: skip audio, artwork and unsupported frame formats without copying them.
         function readEmbeddedTags(buffer) {
-            const bytes = new Uint8Array(buffer), view = new DataView(buffer);
+            const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+            const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
             const id = (p, n) => String.fromCharCode(...bytes.subarray(p, p + n));
             const syncSize = p => bytes.subarray(p, p + 4).reduce((n, b) => n * 128 + b, 0);
             const tags = new Map();
@@ -758,9 +759,14 @@
                 text = text.replace(/\0+$/, '').trim();
                 if (text && (tags.has(name) || tags.size < 128)) tags.set(name, text);
             }
-            if (id(0, 3) === 'ID3' && bytes.length >= 10 && [3, 4].includes(bytes[3]) && !(bytes[5] & 0xc0)) {
+            if (id(0, 3) === 'ID3' && bytes.length >= 10 && [3, 4].includes(bytes[3]) && !(bytes[5] & 0x80)) {
                 const end = Math.min(bytes.length, 10 + syncSize(6));
-                for (let p = 10; p + 10 <= end;) {
+                let p = 10;
+                if (bytes[5] & 0x40) {
+                    if (end < 14) return tags;
+                    p += bytes[3] === 4 ? syncSize(10) : 4 + view.getUint32(10);
+                }
+                for (; p + 10 <= end;) {
                     const name = id(p, 4), size = bytes[3] === 4 ? syncSize(p + 4) : view.getUint32(p + 4);
                     const start = p + 10, flags = bytes[p + 9];
                     p = start + size;
@@ -785,6 +791,9 @@
                     }
                 }
                 chunks(12, Math.min(bytes.length, 8 + view.getUint32(4, true)), (name, start, end) => {
+                    if (name.toLowerCase() === 'id3 ' && id(start, 3) === 'ID3') {
+                        for (const [key, value] of readEmbeddedTags(bytes.subarray(start, end))) store(key, value);
+                    }
                     if (name !== 'LIST' || end - start < 4 || id(start, 4) !== 'INFO') return;
                     chunks(start + 4, end, (key, a, b) => {
                         if (b - a <= 65536) store(key, new TextDecoder().decode(bytes.subarray(a, b)));
@@ -794,7 +803,50 @@
             return tags;
         }
 
+        function applyAudioTags(tags) {
+            // The private block retains structured fields that have no portable audio tag.
+            const saved = tags.get('TXXX:SYNCTAG_EDITOR') || tags.get('ISTG');
+            let data = {};
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) data = parsed;
+                } catch { /* Ordinary audio tags remain usable without the editor block. */ }
+            }
+            const memo = tags.get('COMM') || tags.get('ICMT');
+            const labels = { 'MASTER CONTROL':'MasterOwner', 'PUBLISHING CONTROL':'Publisher', 'RECORD LABEL':'RecordLabel',
+                'WEBSITE / PORTFOLIO':'Website', VERSION:'Version', 'LYRIC STATUS':'Explicit', ISRC:'ISRC', 'WORK ID':'ISWC',
+                KEY:'Key', CLEARANCE:'Clearance', 'SONIC DESCRIPTION':'SoundsLike', 'PLACEMENT NOTES':'PlacementNotes' };
+            // Recover fields from clearance memos written before the private block existed.
+            if (!saved && memo) for (const line of memo.split(/\r?\n/)) {
+                const match = /^([^:]+): (.+)$/.exec(line);
+                if (!match) continue;
+                const [, label, value] = match;
+                if (['Not supplied', 'Not verified'].includes(value)) continue;
+                if (Object.hasOwn(labels, label)) data['meta' + labels[label]] = value;
+                if (label === 'TEMPO') data.metaBPM = value.replace(/ BPM$/, '');
+                if (label === 'LICENSING CONTACT') for (const part of value.split(' | ')) data[part.includes('@') ? 'metaContactEmail' : 'metaContactPhone'] = part;
+                if (label === 'WRITERS / PUBLISHERS') data.writers = value.split(' // ').map(entry => {
+                    const [name, ...parts] = entry.split(' · ');
+                    return { name, pro: parts.find(v => !v.startsWith('(IPI #') && !v.endsWith('%')) || '',
+                        ipi: parts.find(v => v.startsWith('(IPI #'))?.slice(6, -1), split: parts.find(v => v.endsWith('%'))?.slice(0, -1) || '' };
+                });
+                if (label === 'GENRE' || label === 'MOOD') data[label === 'GENRE' ? 'genres' : 'moods'] = value.split(', ');
+            }
+            const fields = { TIT2:'Title', INAM:'Title', TPE1:'Artist', IART:'Artist', TALB:'Album', IPRD:'Album',
+                TYER:'Year', TDRC:'Year', ICRD:'Year', TBPM:'BPM', TSRC:'ISRC', TKEY:'Key', TPUB:'Publisher', ICOP:'MasterOwner',
+                'TXXX:SYNC_CONTACT':'ContactEmail', 'TXXX:CLEARANCE':'Clearance' };
+            for (const [key, value] of tags) if (Object.hasOwn(fields, key)) data['meta' + fields[key]] = value;
+            const genre = tags.get('TCON') || tags.get('IGNR');
+            if (genre && (!Array.isArray(data.genres) || data.genres.join(' / ') !== genre)) data.genres = [genre];
+            const mood = tags.get('TXXX:MOOD') || tags.get('TMOO');
+            if (mood) data.moods = mood.split(', ');
+            applyEditorSnapshot(data);
+            if (memo) document.getElementById('metaComments').value = memo;
+        }
+
         async function processAudioFile(file) {
+            const replacingTrack = !!uploadedAudioBlob;
             audioFileName = file.name;
             audioFileType = file.type || (file.name.toLowerCase().endsWith('.wav') ? 'audio/wav' : 'audio/mpeg');
             uploadedAudioBlob = file;
@@ -811,7 +863,7 @@
 
             // Auto fill track title if title is empty
             const titleInput = document.getElementById('metaTitle');
-            if (!titleInput.value || titleInput.value === "Midnight Run") {
+            if (replacingTrack || !titleInput.value) {
                 const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
                 titleInput.value = cleanName;
             }
@@ -824,16 +876,14 @@
                 if (uploadedAudioBlob !== file) return;
                 uploadedAudioArrayBuffer = e.target.result;
                 const tags = readEmbeddedTags(uploadedAudioArrayBuffer);
-                const fields = { TIT2:'Title', INAM:'Title', TPE1:'Artist', IART:'Artist', TALB:'Album', IPRD:'Album',
-                    TYER:'Year', TDRC:'Year', ICRD:'Year', TBPM:'BPM', TSRC:'ISRC', TKEY:'Key', COMM:'Comments', ICMT:'Comments', TPUB:'Publisher', ICOP:'MasterOwner' };
-                const lines = [];
-                for (const [key, value] of tags) {
-                    const field = Object.hasOwn(fields, key) ? fields[key] : null;
-                    const input = field && document.getElementById('meta' + field);
-                    if (input && (!input.options || Array.from(input.options).some(o => o.value === value))) input.value = value;
-                    lines.push(`${field || key}: ${value}`);
+                if (replacingTrack) {
+                    const empty = Object.fromEntries(Object.keys(getEditorSnapshot()).filter(id => id.startsWith('meta')).map(id => [id, '']));
+                    applyEditorSnapshot({ ...empty, metaTitle: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '), writers: [], genres: [], moods: [], activeProfileName: 'No profile selected' });
                 }
-                document.getElementById('embeddedMetadata').textContent = lines.join('\n') || 'No supported ID3 or WAV INFO text tags found.';
+                applyAudioTags(tags);
+                document.getElementById('embeddedMetadata').textContent = Array.from(tags)
+                    .filter(([key]) => !['ISTG', 'TXXX:SYNCTAG_EDITOR'].includes(key))
+                    .map(([key, value]) => `${key}: ${value}`).join('\n') || 'No supported ID3 or WAV INFO text tags found.';
                 updateFilenamePreview();
                 scheduleDraftSave();
                 loadAudioIntoPlayer(uploadedAudioBlob);
@@ -864,11 +914,11 @@
                 if (audioElement.paused) {
                     audioElement.play();
                     playIcon.setAttribute('data-lucide', 'pause');
-                    lucide.createIcons();
+                    globalThis.lucide?.createIcons();
                 } else {
                     audioElement.pause();
                     playIcon.setAttribute('data-lucide', 'play');
-                    lucide.createIcons();
+                    globalThis.lucide?.createIcons();
                 }
             };
 
@@ -876,7 +926,7 @@
                 audioElement.pause();
                 audioElement.currentTime = 0;
                 playIcon.setAttribute('data-lucide', 'play');
-                lucide.createIcons();
+                globalThis.lucide?.createIcons();
             };
 
             audioElement.ontimeupdate = () => {
@@ -1131,7 +1181,7 @@
                 </button>
             `;
             container.appendChild(row);
-            lucide.createIcons();
+            globalThis.lucide?.createIcons();
             setupFormListeners();
             updateCommentsField();
             calculateReadinessScore();
@@ -1382,6 +1432,7 @@
                 const inputs = row.querySelectorAll('input, select');
                 return { name: inputs[0].value, pro: inputs[1].value, ipi: inputs[2].value, split: inputs[3].value };
             });
+            metadata.metaComments = document.getElementById('metaComments').value;
             metadata.genres = Array.from(selectedGenres);
             metadata.moods = Array.from(selectedMoods);
             return metadata;
@@ -1391,7 +1442,10 @@
             if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('Metadata JSON must contain an object.');
             const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaPublisher', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
             fields.forEach(id => {
-                if (typeof snapshot[id] === 'string') document.getElementById(id).value = snapshot[id].slice(0, 4000);
+                if (typeof snapshot[id] !== 'string') return;
+                const input = document.getElementById(id), value = snapshot[id].slice(0, 4000);
+                if (input.options && value && !Array.from(input.options).some(o => o.value === value)) input.add(new Option(value, value));
+                input.value = value;
             });
             if (typeof snapshot.activeProfileName === 'string') document.getElementById('activeProfileDisplay').textContent = snapshot.activeProfileName.slice(0, 160);
             if (typeof snapshot.cueCollection === 'string') document.getElementById('cueCollection').value = snapshot.cueCollection.slice(0, 120);
@@ -1401,19 +1455,20 @@
                 snapshot.writers.slice(0, 30).forEach(writer => {
                     if (writer && typeof writer === 'object') addWriterRow({
                         name: String(writer.name || '').slice(0, 200),
-                        pro: String(writer.pro || 'BMI').slice(0, 40),
+                        pro: String(writer.pro || '').slice(0, 40),
                         ipi: String(writer.ipi || '').slice(0, 30),
-                        split: String(writer.split ?? '50').slice(0, 8)
+                        split: String(writer.split ?? '').slice(0, 8)
                     });
                 });
                 if (!snapshot.writers.length) addWriterRow();
             }
-            if (Array.isArray(snapshot.genres)) selectedGenres = new Set(snapshot.genres.filter(v => PRESET_GENRES.includes(v)));
-            if (Array.isArray(snapshot.moods)) selectedMoods = new Set(snapshot.moods.filter(v => PRESET_MOODS.includes(v)));
+            if (Array.isArray(snapshot.genres)) selectedGenres = new Set(snapshot.genres.filter(v => typeof v === 'string' && v.length <= 256));
+            if (Array.isArray(snapshot.moods)) selectedMoods = new Set(snapshot.moods.filter(v => typeof v === 'string' && v.length <= 256));
             updateCommentsField();
             calculateReadinessScore();
             updateFilenamePreview();
             initGenreAndMoodClouds();
+            if (typeof snapshot.metaComments === 'string') document.getElementById('metaComments').value = snapshot.metaComments;
         }
 
         function scheduleDraftSave() {
@@ -1713,7 +1768,7 @@
             document.getElementById('toastMessage').textContent = msg;
             const iconContainer = document.getElementById('toastIcon');
             iconContainer.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4"></i>`;
-            lucide.createIcons();
+            globalThis.lucide?.createIcons();
 
             toast.classList.remove('opacity-0', 'translate-y-24');
             setTimeout(() => {
@@ -1738,7 +1793,8 @@
             downloadBtn.disabled = true;
 
             try {
-                // Collect metadata values
+                // Keep local pitch folders, profile names and duplicate memo text out of the audio.
+                const { cueCollection, activeProfileName, metaComments, ...audioFields } = getEditorSnapshot();
                 const meta = {
                     title: document.getElementById('metaTitle').value,
                     artist: document.getElementById('metaArtist').value,
@@ -1752,6 +1808,7 @@
                     contact: document.getElementById('metaContactEmail').value || '',
                     masterOwner: document.getElementById('metaMasterOwner').value,
                     publisher: document.getElementById('metaPublisher').value || '',
+                    editor: JSON.stringify(audioFields),
                     mood: Array.from(selectedMoods).join(', ')
                 };
 
@@ -1787,7 +1844,7 @@
             } finally {
                 downloadBtn.innerHTML = originalBtnHtml;
                 downloadBtn.disabled = false;
-                lucide.createIcons();
+                globalThis.lucide?.createIcons();
             }
         }
 
@@ -1879,6 +1936,7 @@
             frames.push(makeTextFrame("TSRC", meta.isrc));
             frames.push(makeTextFrame("TPUB", meta.publisher));
             frames.push(makeCommentFrame(meta.comment));
+            frames.push(makeTXXXFrame("SYNCTAG_EDITOR", meta.editor));
             frames.push(makeTXXXFrame("SYNC_CONTACT", meta.contact));
             frames.push(makeTXXXFrame("MOOD", meta.mood));
             frames.push(makeTXXXFrame("CLEARANCE", document.getElementById('metaClearance').value));
@@ -1959,6 +2017,7 @@
             }
 
             const subchunks = [
+                makeInfoSubchunk('ISTG', meta.editor),
                 makeInfoSubchunk('INAM', meta.title),
                 makeInfoSubchunk('IART', meta.artist),
                 makeInfoSubchunk('IPRD', meta.album),
