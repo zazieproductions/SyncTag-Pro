@@ -70,7 +70,7 @@
             <div class="hidden md:flex items-center gap-3 bg-studio-850 px-3.5 py-1.5 rounded-lg border border-slate-800">
                 <div class="flex flex-col text-right">
                     <span class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Active Vault Profile</span>
-                    <span id="activeProfileDisplay" class="text-xs font-medium text-indigo-300">Nightfall Music Pub (BMI)</span>
+                    <span id="activeProfileDisplay" class="text-xs font-medium text-indigo-300">No profile selected</span>
                 </div>
                 <button onclick="openProfileModal()" class="p-1.5 rounded-md hover:bg-slate-700/50 text-slate-300 transition" title="Switch or Edit Rights Profile">
                     <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i>
@@ -122,6 +122,11 @@
                         <span id="currentTrackName" class="font-medium text-slate-200 truncate max-w-[200px]">No file</span>
                         <span id="currentTrackMeta" class="text-slate-400 font-mono text-[11px]">0:00 / 0:00</span>
                     </div>
+
+                    <details class="text-xs text-slate-300" open>
+                        <summary class="cursor-pointer font-semibold">Embedded file metadata</summary>
+                        <pre id="embeddedMetadata" class="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words"></pre>
+                    </details>
 
                     <!-- Mini Waveform Canvas -->
                     <div class="relative bg-studio-900 rounded-lg h-14 w-full overflow-hidden border border-slate-800 flex items-center">
@@ -201,7 +206,7 @@
                     </button>
                 </div>
                 <p class="text-xs text-slate-400">
-                    Switch between pre-saved catalog entities to instantly auto-fill contact info, publisher, writer PRO, and 100% one-stop sync warranty clauses.
+                    Zazie Productions is the primary studio profile. Apply it to tracks covered by those rights, then review the owners, splits and licensing contact.
                 </p>
 
                 <div class="flex flex-wrap gap-2 pt-1" id="profilePillsContainer">
@@ -247,7 +252,7 @@
                         <span id="draftStatus" class="text-[10px] text-slate-500" aria-live="polite">Draft not saved</span>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="applyZazieProfile()" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-md bg-indigo-500/15 border border-indigo-400/30 text-indigo-200 hover:bg-indigo-500/25">Use Zazie rights</button>
+                        <button type="button" onclick="applyZazieProfile()" class="px-2.5 py-1.5 text-[11px] font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-500">Autofill Zazie Productions profile</button>
                         <button type="button" onclick="saveDraft()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Save draft</button>
                         <button type="button" onclick="exportMetadataJson()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Export metadata JSON</button>
                         <button type="button" onclick="document.getElementById('metadataJsonInput').click()" class="px-2.5 py-1.5 text-[11px] rounded-md bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Import JSON</button>
@@ -266,15 +271,16 @@
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">
                             Track Title <span class="text-emerald-400">*</span>
                         </label>
-                        <input type="text" id="metaTitle" placeholder="e.g. Midnight Run (Main Instrumental Mix)" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-500 transition">
+                        <input type="text" id="metaTitle" placeholder="Registered track title" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3.5 py-2 text-sm text-white placeholder-slate-500 transition">
                     </div>
 
                     <!-- Version / Mix -->
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Version / Stem Type</label>
                         <select id="metaVersion" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
+                            <option value="" selected>Select mix version</option>
                             <option value="Main Vocal">Full Vocal Master</option>
-                            <option value="Instrumental" selected>Full Instrumental</option>
+                            <option value="Instrumental">Full Instrumental</option>
                             <option value="TV Mix / No Lead">TV Mix (Backing Vocals Only)</option>
                             <option value="Underscore / Light">Underscore / Light</option>
                             <option value="60s Cutdown">60s Commercial Cutdown</option>
@@ -286,19 +292,19 @@
                     <!-- Artist Name -->
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Artist / Project <span class="text-emerald-400">*</span></label>
-                        <input type="text" id="metaArtist" placeholder="e.g. Atlas Silver" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                        <input type="text" id="metaArtist" placeholder="Credited performing artist" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
                     </div>
 
                     <!-- Album / Library Name -->
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Album / Sync Reel</label>
-                        <input type="text" id="metaAlbum" placeholder="e.g. Cinematic Tension Vol. 4" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                        <input type="text" id="metaAlbum" placeholder="Release or catalog collection" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
                     </div>
 
                     <!-- Release Year -->
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Year</label>
-                        <input type="text" id="metaYear" placeholder="2025" value="2025" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
+                        <input type="text" id="metaYear" placeholder="YYYY" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 transition">
                     </div>
 
                     <!-- ISRC Code -->
@@ -307,7 +313,7 @@
                             <span>ISRC Code</span>
                             <span class="text-[10px] text-slate-500 font-mono">12 Chars</span>
                         </label>
-                        <input type="text" id="metaISRC" placeholder="US-S1Z-25-00109" maxlength="15" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-emerald-400 placeholder-slate-600 transition">
+                        <input type="text" id="metaISRC" placeholder="Assigned recording code" maxlength="15" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-emerald-400 placeholder-slate-600 transition">
                     </div>
 
                     <!-- ISWC Code / Work ID -->
@@ -316,13 +322,14 @@
                             <span>ISWC / PRO Work ID</span>
                             <span class="text-[10px] text-slate-500 font-mono">BMI/ASCAP</span>
                         </label>
-                        <input type="text" id="metaISWC" placeholder="T-070.245.981-2 / #4829103" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-slate-600 transition">
+                        <input type="text" id="metaISWC" placeholder="Assigned work code or PRO work number" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white placeholder-slate-600 transition">
                     </div>
 
                     <!-- Sync Clearance Status (One-Stop / Pre-cleared) -->
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Clearance Guarantee <span class="text-emerald-400">*</span></label>
                         <select id="metaClearance" class="w-full bg-studio-900 border border-emerald-500/40 rounded-lg px-3 py-2 text-sm text-emerald-300 font-medium transition">
+                            <option value="" selected>Not verified</option>
                             <option value="100% ONE-STOP (Both Master & Sync 100% Pre-cleared)">⚡ 100% ONE-STOP (Master & Sync)</option>
                             <option value="200% Pre-Cleared (Standard Indie Co-Publishing)">200% Pre-Cleared</option>
                             <option value="Master Only Pre-Cleared (Pub Requires Clearance)">Master Only (Publishing Separate)</option>
@@ -343,7 +350,7 @@
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Musical Key</label>
                         <select id="metaKey" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
-                            <option value="">Select Key...</option>
+                            <option value="" selected>Select key</option>
                             <option value="A Minor">A Minor (Am)</option>
                             <option value="C Major">C Major (C)</option>
                             <option value="D Minor">D Minor (Dm)</option>
@@ -362,6 +369,7 @@
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Explicit Lyrics</label>
                         <select id="metaExplicit" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white transition">
+                            <option value="" selected>Select lyric status</option>
                             <option value="Clean / None">Clean / Safe for Broadcast</option>
                             <option value="Explicit Lyrics">Explicit (Contains Profanity)</option>
                             <option value="Instrumental (No Vocals)">Pure Instrumental</option>
@@ -385,18 +393,18 @@
                     <div id="splitsContainer" class="flex flex-col gap-2">
                         <!-- Default Writer Row 1 -->
                         <div class="writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850">
-                            <input type="text" placeholder="Writer Full Legal Name (First Last)" value="Marcus Vance" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                            <input type="text" placeholder="Writer Full Legal Name (First Last)" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
                             <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
-                                <option value="BMI" selected>BMI</option>
+                                <option value="">Select PRO</option><option value="BMI">BMI</option>
                                 <option value="ASCAP">ASCAP</option>
                                 <option value="SESAC">SESAC</option>
                                 <option value="PRS">PRS for Music</option>
                                 <option value="SOCAN">SOCAN</option>
                                 <option value="GEMA">GEMA</option>
                             </select>
-                            <input type="text" placeholder="IPI / CAE # (e.g. 00849204918)" value="00849204918" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                            <input type="text" placeholder="Assigned IPI / CAE number" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
                             <div class="col-span-2 flex items-center gap-1">
-                                <input type="number" placeholder="50" value="50" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                                <input type="number" placeholder="Share" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
                                 <span class="text-xs text-slate-400">%</span>
                             </div>
                             <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
@@ -406,16 +414,16 @@
 
                         <!-- Default Publisher Row 2 -->
                         <div class="writer-row grid grid-cols-12 gap-2 items-center bg-studio-900/60 p-2.5 rounded-lg border border-slate-850">
-                            <input type="text" placeholder="Publisher Legal Entity" value="Nightfall Music Publishing" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
+                            <input type="text" placeholder="Publisher Legal Entity" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
                             <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
-                                <option value="BMI" selected>BMI</option>
+                                <option value="">Select PRO</option><option value="BMI">BMI</option>
                                 <option value="ASCAP">ASCAP</option>
                                 <option value="SESAC">SESAC</option>
                                 <option value="PRS">PRS</option>
                             </select>
-                            <input type="text" placeholder="Publisher IPI #" value="00389102451" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
+                            <input type="text" placeholder="Publisher IPI #" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
                             <div class="col-span-2 flex items-center gap-1">
-                                <input type="number" placeholder="50" value="50" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                                <input type="number" placeholder="Share" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
                                 <span class="text-xs text-slate-400">%</span>
                             </div>
                             <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
@@ -429,15 +437,19 @@
                 <div class="mt-6 pt-5 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Master Owner (Sound Recording)</label>
-                        <input type="text" id="metaMasterOwner" placeholder="e.g. Nightfall Records LLC (100%)" value="Nightfall Records LLC" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        <input type="text" id="metaMasterOwner" placeholder="Owner(s) and percentage of master controlled" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                    </div>
+                    <div>
+                        <label for="metaPublisher" class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Publishing control (composition)</label>
+                        <input id="metaPublisher" type="text" placeholder="Publisher(s), controlled shares and territory" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Licensing Direct Email <span class="text-emerald-400">*</span></label>
-                        <input type="email" id="metaContactEmail" placeholder="sync@nightfallmusic.com" value="sync@nightfallmusic.com" class="w-full bg-studio-900 border border-emerald-500/30 rounded-lg px-3 py-2 text-sm text-emerald-300">
+                        <input type="email" id="metaContactEmail" placeholder="Licensing contact email" class="w-full bg-studio-900 border border-emerald-500/30 rounded-lg px-3 py-2 text-sm text-emerald-300">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Licensing Phone / Direct Line</label>
-                        <input type="text" id="metaContactPhone" placeholder="+1 (310) 555-0192" value="+1 (310) 555-0192" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        <input type="text" id="metaContactPhone" placeholder="Direct line with country code" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
                     </div>
                 </div>
 
@@ -445,7 +457,7 @@
                 <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Record Label</label>
-                        <input type="text" id="metaRecordLabel" placeholder="e.g. Zazie Productions LLC" value="" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                        <input type="text" id="metaRecordLabel" placeholder="Record label, if applicable" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Website / Portfolio</label>
@@ -477,12 +489,12 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sounds Like / RIYL (Artist References)</label>
-                            <input type="text" id="metaSoundsLike" placeholder="e.g. M83, Hans Zimmer, Stranger Things, Trent Reznor" value="Hans Zimmer, Stranger Things, Tycho" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Sonic description</label>
+                            <input type="text" id="metaSoundsLike" placeholder="Instrumentation, texture and arrangement" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Ideal TV / Film Placements</label>
-                            <input type="text" id="metaPlacementNotes" placeholder="e.g. Trailer crescendo, Crime Thriller, Cyberpunk chase, Automotive ad" value="Crime Drama, High-Speed Chase, Sci-Fi Thriller trailer" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
+                            <input type="text" id="metaPlacementNotes" placeholder="Scene fit, edit points or alternate mixes" class="w-full bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white">
                         </div>
                     </div>
 
@@ -510,7 +522,7 @@
                     <span id="cueLibraryStatus" class="text-[10px] text-slate-500" aria-live="polite">0 cues in this browser</span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-2 mt-4">
-                    <input id="cueCollection" type="text" maxlength="120" placeholder="Collection / pitch name (e.g. Zazie Horror Trailer Reel)" class="min-w-0 bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
+                    <input id="cueCollection" type="text" maxlength="120" placeholder="Collection or pitch name" class="min-w-0 bg-studio-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white">
                     <button type="button" onclick="saveCueToCatalog()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white">Save / update cue</button>
                     <button type="button" onclick="exportCueCollectionCsv()" class="px-3 py-2 text-xs rounded-lg bg-studio-900 border border-slate-700 text-slate-300 hover:text-white">Export collection CSV</button>
                 </div>
@@ -584,6 +596,7 @@
                 name: 'Zazie Productions (BMI)',
                 artist: 'Zazie Productions',
                 masterOwner: 'Zazie Productions LLC (100%)',
+                publisher: 'Zazie Productions Publishing',
                 recordLabel: 'Zazie Productions LLC',
                 website: 'https://horror.zazieproductions.com',
                 contactEmail: 'zaziediya@gmail.com',
@@ -593,45 +606,6 @@
                     { name: 'Zazie Productions Publishing', pro: 'BMI', ipi: '01372389230', split: 100 }
                 ],
                 clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
-            },
-            {
-                id: 'profile_1',
-                name: 'Nightfall Music Pub (BMI)',
-                artist: 'Marcus Vance',
-                masterOwner: 'Nightfall Records LLC (100%)',
-                contactEmail: 'licensing@nightfallmusic.com',
-                contactPhone: '+1 (310) 892-4911',
-                writers: [
-                    { name: 'Marcus Vance', pro: 'BMI', ipi: '00849204918', split: 50 },
-                    { name: 'Nightfall Music Publishing', pro: 'BMI', ipi: '00389102451', split: 50 }
-                ],
-                clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
-            },
-            {
-                id: 'profile_2',
-                name: 'Solar Flare Media (ASCAP)',
-                artist: 'Sarah Jenkins',
-                masterOwner: 'Solar Flare Group (100% Master)',
-                contactEmail: 'sync@solarflaremedia.tv',
-                contactPhone: '+1 (212) 402-9900',
-                writers: [
-                    { name: 'Sarah Jenkins', pro: 'ASCAP', ipi: '00592817293', split: 50 },
-                    { name: 'Solar Flare Publishing', pro: 'ASCAP', ipi: '00918237462', split: 50 }
-                ],
-                clearance: '100% ONE-STOP (Both Master & Sync 100% Pre-cleared)'
-            },
-            {
-                id: 'profile_3',
-                name: 'Two-Stop Split (Writer BMI / Pub SESAC)',
-                artist: 'Echo & Iron',
-                masterOwner: 'Echo & Iron LLC',
-                contactEmail: 'clearance@echoironmusic.com',
-                contactPhone: '+1 (615) 320-1122',
-                writers: [
-                    { name: 'Tyler Reed', pro: 'BMI', ipi: '00712398412', split: 50 },
-                    { name: 'Velocity Beats Pub', pro: 'SESAC', ipi: '00192837411', split: 50 }
-                ],
-                clearance: '200% Pre-Cleared (Standard Indie Co-Publishing)'
             }
         ];
 
@@ -648,8 +622,8 @@
             "Melancholic / Nostalgic", "Playful / Lighthearted", "Aggressive / Badass", "Reflective / Peaceful"
         ];
 
-        let selectedGenres = new Set(["Cinematic Tension", "Trailer Hybrid Orchestral"]);
-        let selectedMoods = new Set(["Building / Crescendo", "Suspenseful / Mysterious"]);
+        let selectedGenres = new Set();
+        let selectedMoods = new Set();
 
         // Web Audio & Waveform Visualization
         let audioContext = null;
@@ -774,10 +748,58 @@
         }
 
         // Process incoming Audio File
+        // Read text only: skip audio, artwork and unsupported frame formats without copying them.
+        function readEmbeddedTags(buffer) {
+            const bytes = new Uint8Array(buffer), view = new DataView(buffer);
+            const id = (p, n) => String.fromCharCode(...bytes.subarray(p, p + n));
+            const syncSize = p => bytes.subarray(p, p + 4).reduce((n, b) => n * 128 + b, 0);
+            const tags = new Map();
+            function store(name, text) {
+                text = text.replace(/\0+$/, '').trim();
+                if (text && (tags.has(name) || tags.size < 128)) tags.set(name, text);
+            }
+            if (id(0, 3) === 'ID3' && bytes.length >= 10 && [3, 4].includes(bytes[3]) && !(bytes[5] & 0xc0)) {
+                const end = Math.min(bytes.length, 10 + syncSize(6));
+                for (let p = 10; p + 10 <= end;) {
+                    const name = id(p, 4), size = bytes[3] === 4 ? syncSize(p + 4) : view.getUint32(p + 4);
+                    const start = p + 10, flags = bytes[p + 9];
+                    p = start + size;
+                    if (!/^[A-Z0-9]{4}$/.test(name) || p > end) break;
+                    if (flags || !size || size > 65536 || !(name.startsWith('T') || name === 'COMM')) continue;
+                    const offset = start + (name === 'COMM' ? 4 : 1);
+                    const enc = ['windows-1252', bytes[offset] === 0xfe ? 'utf-16be' : 'utf-16le', 'utf-16be', 'utf-8'][bytes[start]];
+                    if (!enc) continue;
+                    const text = new TextDecoder(enc).decode(bytes.subarray(offset, p));
+                    if (name === 'COMM' || name === 'TXXX') {
+                        const split = text.indexOf('\0');
+                        if (split >= 0) store(name === 'COMM' ? name : 'TXXX:' + text.slice(0, split), text.slice(split + 1));
+                    } else store(name, text);
+                }
+            } else if (id(0, 4) === 'RIFF' && id(8, 4) === 'WAVE') {
+                function chunks(start, end, visit) {
+                    for (let p = start; p + 8 <= end;) {
+                        const size = view.getUint32(p + 4, true), next = p + 8 + size;
+                        if (next > end) break;
+                        visit(id(p, 4), p + 8, next);
+                        p = next + size % 2;
+                    }
+                }
+                chunks(12, Math.min(bytes.length, 8 + view.getUint32(4, true)), (name, start, end) => {
+                    if (name !== 'LIST' || end - start < 4 || id(start, 4) !== 'INFO') return;
+                    chunks(start + 4, end, (key, a, b) => {
+                        if (b - a <= 65536) store(key, new TextDecoder().decode(bytes.subarray(a, b)));
+                    });
+                });
+            }
+            return tags;
+        }
+
         async function processAudioFile(file) {
             audioFileName = file.name;
             audioFileType = file.type || (file.name.toLowerCase().endsWith('.wav') ? 'audio/wav' : 'audio/mpeg');
             uploadedAudioBlob = file;
+            uploadedAudioArrayBuffer = null;
+            document.getElementById('embeddedMetadata').textContent = 'Reading tags…';
 
             // Update UI
             document.getElementById('audioFormatBadge').textContent = file.name.split('.').pop().toUpperCase();
@@ -799,7 +821,21 @@
             // Read as ArrayBuffer for binary metadata insertion
             const reader = new FileReader();
             reader.onload = async (e) => {
+                if (uploadedAudioBlob !== file) return;
                 uploadedAudioArrayBuffer = e.target.result;
+                const tags = readEmbeddedTags(uploadedAudioArrayBuffer);
+                const fields = { TIT2:'Title', INAM:'Title', TPE1:'Artist', IART:'Artist', TALB:'Album', IPRD:'Album',
+                    TYER:'Year', TDRC:'Year', ICRD:'Year', TBPM:'BPM', TSRC:'ISRC', TKEY:'Key', COMM:'Comments', ICMT:'Comments', TPUB:'Publisher', ICOP:'MasterOwner' };
+                const lines = [];
+                for (const [key, value] of tags) {
+                    const field = Object.hasOwn(fields, key) ? fields[key] : null;
+                    const input = field && document.getElementById('meta' + field);
+                    if (input && (!input.options || Array.from(input.options).some(o => o.value === value))) input.value = value;
+                    lines.push(`${field || key}: ${value}`);
+                }
+                document.getElementById('embeddedMetadata').textContent = lines.join('\n') || 'No supported ID3 or WAV INFO text tags found.';
+                updateFilenamePreview();
+                scheduleDraftSave();
                 loadAudioIntoPlayer(uploadedAudioBlob);
                 calculateReadinessScore();
                 showToast("Audio Loaded", `${file.name} is ready for sync tagging.`, "disc");
@@ -1079,7 +1115,7 @@
             row.innerHTML = `
                 <input type="text" placeholder="Writer Full Legal Name (First Last)" value="${escapeHtml(data ? data.name : '')}" class="col-span-4 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white">
                 <select class="col-span-2 bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white">
-                    <option value="BMI" ${data && data.pro==='BMI'?'selected':''}>BMI</option>
+                    <option value="">Select PRO</option><option value="BMI" ${data && data.pro==='BMI'?'selected':''}>BMI</option>
                     <option value="ASCAP" ${data && data.pro==='ASCAP'?'selected':''}>ASCAP</option>
                     <option value="SESAC" ${data && data.pro==='SESAC'?'selected':''}>SESAC</option>
                     <option value="PRS" ${data && data.pro==='PRS'?'selected':''}>PRS</option>
@@ -1087,7 +1123,7 @@
                 </select>
                 <input type="text" placeholder="IPI / CAE #" value="${escapeHtml(data ? data.ipi : '')}" class="col-span-3 bg-studio-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs font-mono text-indigo-300">
                 <div class="col-span-2 flex items-center gap-1">
-                    <input type="number" placeholder="50" value="${escapeHtml(data ? data.split : '50')}" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
+                    <input type="number" placeholder="Share" value="${escapeHtml(data ? data.split : '')}" min="1" max="100" class="split-percent w-full bg-studio-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white text-right">
                     <span class="text-xs text-slate-400">%</span>
                 </div>
                 <button onclick="removeWriterRow(this)" class="col-span-1 text-slate-500 hover:text-red-400 flex justify-center">
@@ -1129,6 +1165,7 @@
             document.getElementById('activeProfileDisplay').textContent = profile.name;
             document.getElementById('metaArtist').value = profile.artist;
             document.getElementById('metaMasterOwner').value = profile.masterOwner;
+            document.getElementById('metaPublisher').value = profile.publisher || '';
             document.getElementById('metaContactEmail').value = profile.contactEmail;
             document.getElementById('metaContactPhone').value = profile.contactPhone;
             document.getElementById('metaRecordLabel').value = profile.recordLabel || '';
@@ -1204,6 +1241,7 @@
                 name: pubName,
                 artist: artist,
                 masterOwner: document.getElementById('metaMasterOwner').value,
+                publisher: document.getElementById('metaPublisher').value,
                 recordLabel: document.getElementById('metaRecordLabel').value,
                 website: document.getElementById('metaWebsite').value,
                 contactEmail: email,
@@ -1236,26 +1274,29 @@
             let writerList = [];
             document.querySelectorAll('.writer-row').forEach(row => {
                 const inps = row.querySelectorAll('input, select');
-                const name = inps[0].value || 'Writer';
+                const name = inps[0].value.trim();
+                if (!name) return;
                 const pro = inps[1].value;
                 const ipi = inps[2].value ? `(IPI #${inps[2].value})` : '';
-                const pct = inps[3].value || '50';
-                writerList.push(`${name} [${pro} ${ipi} - ${pct}%]`);
+                const pct = inps[3].value;
+                writerList.push([name, pro, ipi, pct && pct + '%'].filter(Boolean).join(' · '));
             });
 
             const genresArr = Array.from(selectedGenres).join(', ');
             const moodsArr = Array.from(selectedMoods).join(', ');
 
-            const comment = 
-`[SYNC CLEARANCE MEMO: ${clearance.toUpperCase()}]
-DIRECT CONTACT: ${email} | ${phone}
-MASTER OWNER: ${masterOwner}${recordLabel ? `\nRECORD LABEL: ${recordLabel}` : ''}${website ? `\nWEBSITE / PORTFOLIO: ${website}` : ''}
-WRITERS / PUBLISHERS: ${writerList.join(' // ')}
-TEMPO: ${bpm ? bpm + ' BPM' : 'N/A'} | KEY: ${key || 'N/A'}
-GENRES: ${genresArr || 'Cinematic'}
-MOODS: ${moodsArr || 'Dynamic'}
-RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
-*All splits 100% pre-cleared for worldwide all media sync synchronization licensing.*`;
+            const field = id => document.getElementById(id).value;
+            const comment = [
+                ['CLEARANCE', clearance || 'Not verified'],
+                ['LICENSING CONTACT', [email, phone].filter(Boolean).join(' | ') || 'Not supplied'],
+                ['MASTER CONTROL', masterOwner || 'Not supplied'],
+                ['PUBLISHING CONTROL', field('metaPublisher') || 'Not supplied'],
+                ['WRITERS / PUBLISHERS', writerList.join(' // ')], ['RECORD LABEL', recordLabel], ['WEBSITE / PORTFOLIO', website],
+                ['VERSION', field('metaVersion')], ['LYRIC STATUS', field('metaExplicit')],
+                ['ISRC', field('metaISRC')], ['WORK ID', field('metaISWC')], ['TEMPO', bpm && bpm + ' BPM'],
+                ['KEY', key], ['GENRE', genresArr], ['MOOD', moodsArr], ['SONIC DESCRIPTION', soundsLike],
+                ['PLACEMENT NOTES', field('metaPlacementNotes')]
+            ].filter(([, value]) => value).map(([label, value]) => `${label}: ${value}`).join('\n');
 
             document.getElementById('metaComments').value = comment;
         }
@@ -1311,7 +1352,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
         }
 
         function setupFormListeners() {
-            const inputs = document.querySelectorAll('#metaTitle, #metaVersion, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaRecordLabel, #metaWebsite, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
+            const inputs = document.querySelectorAll('#metaTitle, #metaVersion, #metaArtist, #metaAlbum, #metaYear, #metaISRC, #metaISWC, #metaClearance, #metaBPM, #metaKey, #metaExplicit, #metaMasterOwner, #metaPublisher, #metaRecordLabel, #metaWebsite, #metaContactEmail, #metaContactPhone, #metaSoundsLike, #metaPlacementNotes, .writer-row input, .writer-row select');
             inputs.forEach(input => {
                 input.oninput = () => {
                     updateCommentsField();
@@ -1332,7 +1373,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
         }
 
         function getEditorSnapshot() {
-            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
+            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaPublisher', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
             const metadata = {};
             fields.forEach(id => metadata[id] = document.getElementById(id).value);
             metadata.activeProfileName = document.getElementById('activeProfileDisplay').textContent;
@@ -1348,7 +1389,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
 
         function applyEditorSnapshot(snapshot) {
             if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) throw new Error('Metadata JSON must contain an object.');
-            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
+            const fields = ['metaTitle', 'metaVersion', 'metaArtist', 'metaAlbum', 'metaYear', 'metaISRC', 'metaISWC', 'metaClearance', 'metaBPM', 'metaKey', 'metaExplicit', 'metaMasterOwner', 'metaPublisher', 'metaRecordLabel', 'metaWebsite', 'metaContactEmail', 'metaContactPhone', 'metaSoundsLike', 'metaPlacementNotes'];
             fields.forEach(id => {
                 if (typeof snapshot[id] === 'string') document.getElementById(id).value = snapshot[id].slice(0, 4000);
             });
@@ -1626,14 +1667,15 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
         // Demo sample filler
         function fillSampleSyncData() {
             document.getElementById('metaTitle').value = "Quantum Horizon (Trailer Mix)";
-            document.getElementById('metaArtist').value = "Atlas Silver & Nightfall";
+            document.getElementById('metaArtist').value = "Demo Ensemble";
             document.getElementById('metaAlbum').value = "Cinematic Impact Reels Vol. 1";
             document.getElementById('metaYear').value = "2025";
-            document.getElementById('metaISRC').value = "US-S1Z-25-00812";
-            document.getElementById('metaISWC').value = "T-931.294.102-1";
+            selectedGenres.add("Cinematic Tension");
+            selectedMoods.add("Building / Crescendo");
+            initGenreAndMoodClouds();
             document.getElementById('metaBPM').value = "130";
             document.getElementById('metaKey').value = "D Minor";
-            document.getElementById('metaSoundsLike').value = "Hans Zimmer, Junkie XL, Interstellar";
+            document.getElementById('metaSoundsLike').value = "Low strings, pulsing synth bass, orchestral build";
             document.getElementById('metaPlacementNotes').value = "Sci-fi blockbuster climax, Epic video game trailer";
             updateCommentsField();
             calculateReadinessScore();
@@ -1698,17 +1740,18 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
             try {
                 // Collect metadata values
                 const meta = {
-                    title: document.getElementById('metaTitle').value || 'Sync Track',
-                    artist: document.getElementById('metaArtist').value || 'Unknown Artist',
-                    album: document.getElementById('metaAlbum').value || 'Sync Catalog',
-                    year: document.getElementById('metaYear').value || '2025',
+                    title: document.getElementById('metaTitle').value,
+                    artist: document.getElementById('metaArtist').value,
+                    album: document.getElementById('metaAlbum').value,
+                    year: document.getElementById('metaYear').value,
                     comment: document.getElementById('metaComments').value || '',
-                    genre: Array.from(selectedGenres).join(' / ') || 'Soundtrack',
+                    genre: Array.from(selectedGenres).join(' / '),
                     bpm: document.getElementById('metaBPM').value || '',
                     key: document.getElementById('metaKey').value || '',
                     isrc: document.getElementById('metaISRC').value || '',
                     contact: document.getElementById('metaContactEmail').value || '',
-                    publisher: document.getElementById('metaMasterOwner').value || '',
+                    masterOwner: document.getElementById('metaMasterOwner').value,
+                    publisher: document.getElementById('metaPublisher').value || '',
                     mood: Array.from(selectedMoods).join(', ')
                 };
 
@@ -1921,7 +1964,7 @@ RIYL / SOUNDS LIKE: ${soundsLike || 'Cinematic'}
                 makeInfoSubchunk('IPRD', meta.album),
                 makeInfoSubchunk('IGNR', meta.genre),
                 makeInfoSubchunk('ICRD', meta.year),
-                makeInfoSubchunk('ICOP', meta.publisher),
+                makeInfoSubchunk('ICOP', meta.masterOwner),
                 makeInfoSubchunk('ICMT', meta.comment)
             ].filter(Boolean);
 

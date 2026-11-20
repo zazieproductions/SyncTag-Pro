@@ -50,7 +50,7 @@
 | **02** | 🟣 | [Quick Start & Usage Instructions](#-quick-start--usage-instructions) | 10-second launch, 5-step sync tagging playbook & CLI inspection |
 | **03** | 🔵 | [System Architecture](#-system-architecture) | Zero-egress module map, sequence flow, binary layouts & frame/chunk tables |
 | **04** | 🟣 | [Controls Reference](#-controls-reference) | Complete reference for every button, dropzone, input, select & modal |
-| **05** | 🟢 | [Vault Presets & Sync Taxonomies](#-vault-presets--sync-taxonomies) | All 4 Vault profiles, sample cue, stem/clearance/key options, 24 tags & readiness rubric |
+| **05** | 🟢 | [Vault Presets & Sync Taxonomies](#-vault-presets--sync-taxonomies) | Studio Vault profile, sample cue, stem/clearance/key options, 24 tags & readiness rubric |
 | **06** | 🟠 | [Performance Engineering](#-performance-engineering) | Zero-reencode `O(n)` muxing, memory profile, worker offloading & large-WAV limits |
 | **07** | 🟣 | [Accessibility (a11y)](#-accessibility-a11y) | Measured WCAG 2.1 AA/AAA contrast ratios, keyboard semantics & hardening roadmap |
 | **08** | 🔴 | [Security & Privacy](#-security--privacy) | Zero-egress memory sandbox, CDN audit, DOM surface review & production CSP |
@@ -209,7 +209,7 @@ Uncompressed PCM audio (`fmt ` and `data` chunks) remains 100% untouched. A 16-b
 
 | Control | DOM ID / Handler | Type | Behavior |
 |---|---|---|---|
-| **Active Vault Profile Indicator** | `#activeProfileDisplay` | Readout (`md:`+) | Displays currently applied publishing/writer entity name (boot default: `Nightfall Music Pub (BMI)`). |
+| **Active Vault Profile Indicator** | `#activeProfileDisplay` | Readout (`md:`+) | Displays currently applied publishing/writer entity name (boot default: `No profile selected`). |
 | **Vault Database Switcher** | `openProfileModal()` | Icon Button | Opens the modal drawer listing all preset and session-saved Rights Vault profiles. |
 | **Sync Readiness Pill** | `#syncScoreBadge` | Live Status Badge | Color-coded real-time QA badge: 🟢 `100% Sync Ready`, 🟣 `{score}% Adequate`, or 🟠 `{score}% Missing Key Data`. |
 | **Embed & Export** | `#downloadBtn` / `triggerDownload()` | Primary CTA | Disabled until audio is loaded; muxes binary ID3v2.3 or RIFF `LIST`/`INFO` tags and triggers sanitized browser download. |
@@ -265,19 +265,19 @@ Uncompressed PCM audio (`fmt ` and `data` chunks) remains 100% untouched. A 16-b
 | **Musical** | Musical Key | `#metaKey` | `select` (11) | `""` | **+5 pts** · MP3 `TKEY`, Memo `KEY:` |
 | **Musical** | Explicit Lyrics | `#metaExplicit` | `select` (3) | `Clean / None` | Broadcast FCC / network content advisory |
 | **Splits** | Add Split | `addWriterRow()` | Button | 2 initial rows | Appends new Writer/Publisher + PRO + IPI + Split `%` row |
-| **Splits** | Writer / Pub Legal Name | `.writer-row input[0]` | `text` | `Marcus Vance` / `Nightfall...` | Memo `WRITERS / PUBLISHERS:`, Vault |
+| **Splits** | Writer / Pub Legal Name | `.writer-row input[0]` | `text` | Blank | Memo `WRITERS / PUBLISHERS:`, Vault |
 | **Splits** | PRO Affiliation | `.writer-row select` | `select` (5–6) | `BMI` | Memo `[PRO ...]`, Vault |
 | **Splits** | IPI / CAE # | `.writer-row input[2]` | `text` | `00849204918` / `00389102451` | Memo `(IPI #...)`, PDF target, Vault |
 | **Splits** | Split Percentage | `.split-percent` | `number` (`1–100`) | `50` / `50` | **Gate:** sum must equal `100` or `200` for `100% Sync Ready` |
 | **Splits** | Remove Split Row | `removeWriterRow()` | Icon Button | Min 1 row | Deletes row (blocks removal of final remaining row with toast) |
-| **Contact** | Master Owner | `#metaMasterOwner` | `text` | `Nightfall Records LLC` | MP3 `TPUB`, WAV `ICOP`, Memo `MASTER OWNER:`, Vault |
-| **Contact** | Licensing Direct Email `*` | `#metaContactEmail` | `email` | `sync@nightfallmusic.com` | **+25 pts** (must contain `@`) · MP3 `TXXX:SYNC_CONTACT`, Memo |
+| **Contact** | Master Owner | `#metaMasterOwner` | `text` | Blank | WAV `ICOP`, Memo `MASTER OWNER:`, Vault |
+| **Contact** | Licensing Direct Email `*` | `#metaContactEmail` | `email` | Blank | **+25 pts** (must contain `@`) · MP3 `TXXX:SYNC_CONTACT`, Memo |
 | **Contact** | Licensing Phone | `#metaContactPhone` | `text` | `+1 (310) 555-0192` | Memo `DIRECT CONTACT:`, Vault |
 | **Contact** | Record Label | `#metaRecordLabel` | `text` | `""` | Conditional Memo `RECORD LABEL:` line, Vault |
 | **Contact** | Website / Portfolio | `#metaWebsite` | `url` | `""` | Conditional Memo `WEBSITE / PORTFOLIO:` line, Vault |
 | **Sonic** | Sync Genre Pills | `#genreTagCloud` | 12 Toggle Pills | 2 active | **+10 pts** (`≥ 1`) · MP3 `TCON`, WAV `IGNR`, Memo `GENRES:` |
 | **Sonic** | Sync Mood & Vibe Pills | `#moodTagCloud` | 12 Toggle Pills | 2 active | **+10 pts** (`≥ 1`) · MP3 `TXXX:MOOD`, Memo `MOODS:` |
-| **Sonic** | Sounds Like / RIYL | `#metaSoundsLike` | `text` | `Hans Zimmer, Stranger Things, Tycho` | Memo `RIYL / SOUNDS LIKE:`, CSV target |
+| **Sonic** | Sounds Like / RIYL | `#metaSoundsLike` | `text` | `Low strings, synth pulse, orchestral build` | Memo `RIYL / SOUNDS LIKE:`, CSV target |
 | **Sonic** | Ideal TV / Film Placements | `#metaPlacementNotes` | `text` | `Crime Drama, High-Speed Chase...` | Editorial scene targeting worksheet field |
 | **Memo** | Sync Clearance Memo | `#metaComments` | `textarea` (3 rows) | Auto-compiled | MP3 `COMM` (`eng`) & WAV `ICMT` (editable prior to export) |
 
@@ -290,19 +290,16 @@ Uncompressed PCM audio (`fmt ` and `data` chunks) remains 100% untouched. A 16-b
 | Profile Name (`id`) | Artist | Master Owner / Label | Writers & Publishers (PRO · IPI · Split) | Direct Contact & Portfolio | Clearance Tier |
 |---|---|---|---|---|---|
 | **Zazie Productions (BMI)**<br/>`profile_zazie` | Zazie Productions | **Master:** Zazie Productions LLC (100%)<br/>**Label:** Zazie Productions LLC | • Zazie Productions (`BMI` · IPI `01280391067` · **100%**)<br/>• Zazie Productions Publishing (`BMI` · IPI `01372389230` · **100%**) | `zaziediya@gmail.com`<br/>`+1 (864) 430-0606`<br/>[horror.zazieproductions.com](https://horror.zazieproductions.com) | 🟢 100% ONE-STOP (Master & Sync) |
-| **Nightfall Music Pub (BMI)**<br/>`profile_1` *(demo)* | Marcus Vance | **Master:** Nightfall Records LLC (100%) | • Marcus Vance (`BMI` · IPI `00849204918` · **50%**)<br/>• Nightfall Music Publishing (`BMI` · IPI `00389102451` · **50%**) | `licensing@nightfallmusic.com`<br/>`+1 (310) 892-4911` | 🟢 100% ONE-STOP (Master & Sync) |
-| **Solar Flare Media (ASCAP)**<br/>`profile_2` *(demo)* | Sarah Jenkins | **Master:** Solar Flare Group (100% Master) | • Sarah Jenkins (`ASCAP` · IPI `00592817293` · **50%**)<br/>• Solar Flare Publishing (`ASCAP` · IPI `00918237462` · **50%**) | `sync@solarflaremedia.tv`<br/>`+1 (212) 402-9900` | 🟢 100% ONE-STOP (Master & Sync) |
-| **Two-Stop Split (Writer BMI / Pub SESAC)**<br/>`profile_3` *(demo)* | Echo & Iron | **Master:** Echo & Iron LLC | • Tyler Reed (`BMI` · IPI `00712398412` · **50%**)<br/>• Velocity Beats Pub (`SESAC` · IPI `00192837411` · **50%**) | `clearance@echoironmusic.com`<br/>`+1 (615) 320-1122` | 🔵 200% Pre-Cleared (Co-Publishing) |
 
 ### 2. 🔵 Sample Sync Track Preset (`fillSampleSyncData()`)
 
 | Field | Pre-Filled Value | Field | Pre-Filled Value |
 |---|---|---|---|
-| **Track Title** | `Quantum Horizon (Trailer Mix)` | **ISWC** | `T-931.294.102-1` |
-| **Artist / Project** | `Atlas Silver & Nightfall` | **Tempo (BPM)** | `130` |
+| **Track Title** | `Quantum Horizon (Trailer Mix)` | **ISWC** | Not supplied |
+| **Artist / Project** | `Demo Ensemble` | **Tempo (BPM)** | `130` |
 | **Album / Sync Reel** | `Cinematic Impact Reels Vol. 1` | **Musical Key** | `D Minor` |
-| **Year** | `2025` | **Sounds Like (RIYL)** | `Hans Zimmer, Junkie XL, Interstellar` |
-| **ISRC Code** | `US-S1Z-25-00812` | **Placement Notes** | `Sci-fi blockbuster climax, Epic video game trailer` |
+| **Year** | `2025` | **Sounds Like (RIYL)** | `Low strings, synth pulse, orchestral build` |
+| **ISRC Code** | Not supplied | **Placement Notes** | `Sci-fi blockbuster climax, Epic video game trailer` |
 
 ### 3. 🟢 Selector Presets (Versions, Clearance Tiers, Keys, Explicit & PROs)
 
@@ -429,7 +426,7 @@ npm test                       # Runs node --test tests/*.test.mjs
 |---|---|
 | 🟣 **MP3 ID3v2.3 Binary Encoder** | Valid `ID3` `03 00` header, MSB=0 syncsafe tag size math, all 13 frames (`TIT2`, `TPE1`, `TALB`, `TYER`, `TCON`, `TBPM`, `TKEY`, `TSRC`, `TPUB`, `COMM` `eng`, `TXXX:SYNC_CONTACT`, `TXXX:MOOD`, `TXXX:CLEARANCE`), omission of blank optional frames, clean stripping of multi-hundred-byte pre-existing ID3 tags on re-export, and bit-identical MPEG payload preservation. |
 | 🟢 **WAV RIFF `LIST`/`INFO` Encoder** | Patched little-endian `RIFF` container size (`totalLen - 8`), untouched `fmt ` + `data` PCM sample bytes, NUL-terminated UTF-8 strings, strict 16-bit word-alignment (`0x00` pad byte on odd subchunk sizes) across all 7 subchunks (`INAM`..`ICMT`), and safe unmodified passthrough on non-RIFF inputs. |
-| 🔵 **Vault, PDF Parser, Readiness & Tempo** | All 4 Vault presets (including *Zazie Productions (BMI)* label, website & IPIs), `RECORD LABEL` & `WEBSITE / PORTFOLIO` Clearance Memo lines, PRO PDF extraction of Title / Work # / ISWC / deduplicated IPIs, 100-pt readiness transitions across `45% Missing`, `100% Adequate`, and `100% Sync Ready` (both `100%` and `200%` splits), `#downloadBtn` buffer gating, 5-tap BPM averaging + `(40, 240)` range guard, and 12+12 taxonomy sets. |
+| 🔵 **Vault, PDF Parser, Readiness & Tempo** | Studio Vault preset (including *Zazie Productions (BMI)* label, website & IPIs), `RECORD LABEL` & `WEBSITE / PORTFOLIO` Clearance Memo lines, PRO PDF extraction of Title / Work # / ISWC / deduplicated IPIs, 100-pt readiness transitions across `45% Missing`, `100% Adequate`, and `100% Sync Ready` (both `100%` and `200%` splits), `#downloadBtn` buffer gating, 5-tap BPM averaging + `(40, 240)` range guard, and 12+12 taxonomy sets. |
 | 🔴 **Privacy, SVG & Docs Integrity** | Asserts zero outbound network primitives in `index.html`, validates XML structure + accessible `<title>`/`<desc>` tags on every SVG diagram, and verifies every relative link and `#heading-anchor` across all Markdown documents. |
 
 ### Manual Pre-Pitch QA Checklist

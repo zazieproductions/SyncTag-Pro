@@ -136,7 +136,7 @@ function createAppHarness() {
     metaContactPhone: '+1 (310) 555-0192',
     metaRecordLabel: '',
     metaWebsite: '',
-    metaSoundsLike: 'Hans Zimmer, Stranger Things, Tycho',
+    metaSoundsLike: 'Low strings, synth pulse, orchestral build',
     metaPlacementNotes: 'Crime Drama, High-Speed Chase, Sci-Fi Thriller trailer',
     metaComments: '',
   };
@@ -458,7 +458,7 @@ describe('Binary Encoder — Broadcast WAV RIFF LIST/INFO (embedWavMetadata)', (
       album: 'Sync Reel 4',
       genre: 'Cinematic Tension',
       year: '2026',
-      publisher: 'Zazie Productions LLC (100%)',
+      masterOwner: 'Zazie Productions LLC (100%)',
       comment: '[SYNC CLEARANCE MEMO: 100% ONE-STOP]',
     };
 
@@ -504,7 +504,7 @@ describe('Binary Encoder — Broadcast WAV RIFF LIST/INFO (embedWavMetadata)', (
       IPRD: meta.album,
       IGNR: meta.genre,
       ICRD: meta.year,
-      ICOP: meta.publisher,
+      ICOP: meta.masterOwner,
       ICMT: meta.comment,
     });
   });
@@ -519,10 +519,10 @@ describe('Binary Encoder — Broadcast WAV RIFF LIST/INFO (embedWavMetadata)', (
 });
 
 describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', () => {
-  it('ships all 4 preset Vault profiles including Zazie Productions (BMI) with label & website', () => {
+  it('ships only the studio Vault preset, Zazie Productions (BMI) with label & website', () => {
     const { ctx, document, writerRows } = createAppHarness();
     const profiles = ctx.__state.syncProfiles;
-    assert.equal(profiles.length, 4);
+    assert.equal(profiles.length, 1);
 
     const zazie = profiles.find((p) => p.id === 'profile_zazie');
     assert.ok(zazie);
@@ -604,10 +604,11 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
 
     // Boot state: Email(25) + Genres(10) + Moods(10) = 45% Missing Key Data, download locked
     ctx.calculateReadinessScore();
-    assert.equal(badge.textContent, '45% Missing Key Data');
+    assert.equal(badge.textContent, '25% Missing Key Data');
     assert.equal(btn.disabled, true);
 
     // Sample data + default 50/50 (100%) splits = 100% Sync Ready
+    document.getElementById('metaISRC').value = 'US-S1Z-25-00812';
     ctx.fillSampleSyncData();
     assert.equal(badge.textContent, '100% Sync Ready');
 
@@ -689,8 +690,8 @@ describe('Vault Profiles, PRO PDF Parser, Readiness Scorer, Memo & Tap Tempo', (
     const { ctx } = createAppHarness();
     assert.equal(ctx.__state.PRESET_GENRES.length, 12);
     assert.equal(ctx.__state.PRESET_MOODS.length, 12);
-    assert.equal(ctx.__state.selectedGenres.size, 2);
-    assert.equal(ctx.__state.selectedMoods.size, 2);
+    assert.equal(ctx.__state.selectedGenres.size, 0);
+    assert.equal(ctx.__state.selectedMoods.size, 0);
   });
 });
 
@@ -778,4 +779,28 @@ describe('Privacy, Assets & Documentation Integrity', () => {
       }
     }
   });
+});
+
+it('reads embedded MP3 and WAV text tags without treating untagged audio as metadata', async () => {
+  const { ctx } = createAppHarness();
+  const meta = { title: 'Café', artist: 'Band', comment: 'Original memo' };
+  const mp3 = ctx.embedMp3ID3Metadata(new ArrayBuffer(4), meta);
+  const wav = ctx.embedWavMetadata(buildMinimalWav().buffer, meta);
+  for (const [blob, title, comment] of [[mp3, 'TIT2', 'COMM'], [wav, 'INAM', 'ICMT']]) {
+    const tags = ctx.readEmbeddedTags(await blob.arrayBuffer());
+    assert.equal(tags.get(title), meta.title);
+    assert.equal(tags.get(comment), meta.comment);
+  }
+  assert.equal(ctx.readEmbeddedTags(new ArrayBuffer(2)).size, 0);
+});
+
+it('distinguishes master and publishing control without asserting a license', () => {
+  const { ctx, document } = createAppHarness();
+  document.getElementById('metaClearance').value = '';
+  document.getElementById('metaPublisher').value = 'Composition administrator (50%, US)';
+  ctx.updateCommentsField();
+  const memo = document.getElementById('metaComments').value;
+  assert.match(memo, /^CLEARANCE: Not verified/);
+  assert.match(memo, /PUBLISHING CONTROL: Composition administrator \(50%, US\)/);
+  assert.doesNotMatch(memo, /worldwide|pre-cleared/i);
 });
