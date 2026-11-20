@@ -6,6 +6,8 @@
 
 **Stamp lossless ID3v2.3 and Broadcast WAV `RIFF LIST/INFO` sync-clearance metadata, PRO/IPI splits, ISRCs, and music-supervisor memos directly inside master audio files — 100% in your browser with zero uploads.**
 
+[**▶ Try SyncTag Pro in your browser**](https://zazieproductions.github.io/SyncTag-Pro/)
+
 [![CI](https://img.shields.io/github/actions/workflow/status/zazieproductions/SyncTag-Pro/ci.yml?branch=main&style=for-the-badge&label=CI%20Verify&logo=githubactions&logoColor=white&color=22c55e)](https://github.com/zazieproductions/SyncTag-Pro/actions/workflows/ci.yml)
 [![MP3 Engine](https://img.shields.io/badge/MP3-ID3v2.3%20Binary-6366f1?style=for-the-badge&logo=itunes&logoColor=white)](docs/BINARY_FORMAT_SPEC.md#2-mp3-container-specification-embedmp3id3metadata)
 [![WAV Engine](https://img.shields.io/badge/WAV-RIFF%20LIST%2FINFO-14b8a6?style=for-the-badge&logo=audacity&logoColor=white)](docs/BINARY_FORMAT_SPEC.md#3-wav-container-specification-embedwavmetadata)
