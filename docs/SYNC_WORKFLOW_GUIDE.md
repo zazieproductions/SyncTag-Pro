@@ -87,7 +87,7 @@ Upload any UTF-8 `.csv`, `.tsv`, or delimited `.txt` file with a header row. Syn
 
 ```csv
 Title,Artist,ISRC,BPM,Key,Sounds Like
-Quantum Horizon (Trailer Mix),Zazie Productions,US-S1Z-25-00812,130,D Minor,"Hans Zimmer, Junkie XL, Interstellar"
+Quantum Horizon (Trailer Mix),Zazie Productions,US-S1Z-25-00812,130,D Minor,"Low strings, synth pulse, orchestral build"
 Subterranean Pulse (Instrumental),Zazie Productions,US-S1Z-26-00104,92,A Minor,"Trent Reznor, Atticus Ross, Hildur Gudnadottir"
 ```
 
@@ -108,20 +108,17 @@ For co-writes, split each side proportionally so the combined total equals eithe
 
 ## 5. Generated Broadcast Sync Clearance Memo Format
 
-Every change to the form updates `#metaComments` using this standardized template (with `RECORD LABEL` and `WEBSITE / PORTFOLIO` lines included automatically whenever populated):
+Start with what the supervisor needs to clear the recording: who controls the master, who controls the composition, what percentage each party controls, and whom to contact. Include territory-specific contacts or limits when applicable. This follows [DISCO’s guidance on metadata for sync pitches](https://help.disco.ac/articles/72747-essential-metadata-for-pitching-tracks-for-sync). Only select one-stop when you have authority for both rights. A complete metadata sheet is not a license.
+
+The generated comments lead with clearance and contact information. Until supplied, the memo reads:
 
 ```text
-[SYNC CLEARANCE MEMO: 100% ONE-STOP (BOTH MASTER & SYNC 100% PRE-CLEARED)]
-DIRECT CONTACT: zaziediya@gmail.com | +1 (864) 430-0606
-MASTER OWNER: Zazie Productions LLC (100%)
-RECORD LABEL: Zazie Productions LLC
-WEBSITE / PORTFOLIO: https://horror.zazieproductions.com
-WRITERS / PUBLISHERS: Zazie Productions [BMI (IPI #01280391067) - 100%] // Zazie Productions Publishing [BMI (IPI #01372389230) - 100%]
-TEMPO: 130 BPM | KEY: D Minor
-GENRES: Cinematic Tension, Trailer Hybrid Orchestral
-MOODS: Building / Crescendo, Suspenseful / Mysterious
-RIYL / SOUNDS LIKE: Hans Zimmer, Junkie XL, Interstellar
-*All splits 100% pre-cleared for worldwide all media sync synchronization licensing.*
+CLEARANCE: Not verified
+LICENSING CONTACT: Not supplied
+MASTER CONTROL: Not supplied
+PUBLISHING CONTROL: Not supplied
 ```
+
+For discovery, describe what is audible (instrumentation, texture, tempo and mood). Identify the exact mix and lyric status; use placement notes for edit points and available alternates. Leave unassigned identifiers blank.
 
 You can also hand-edit `#metaComments` immediately before clicking **Embed & Export** (for example, to append a custom restriction note, agency brief reference number, or stem download link) — `triggerDownload()` embeds the exact text present in `#metaComments` at export time.
